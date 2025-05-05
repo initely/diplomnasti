@@ -1,0 +1,110 @@
+/* Базовые сбросы и переменные */
+:root {
+  --color-bg: #dcdbec;
+  --color-card: #f7f7ff;
+  --color-text: #490471f2;
+  --radius-card: 20px;
+  --font-base: 'Montserrat Alternates', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-bg);
+  font-family: var(--font-base);
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+/* Контейнер для центрирования */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Заголовок страницы */
+.page-header {
+  background-color: var(--color-card);
+  box-shadow: 0 4px 44px rgba(0, 0, 0, 0.25);
+  padding: 20px 0;
+}
+
+.page-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+}
+
+.page-header__title {
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.page-header__avatar {
+  width: 64px;
+  height: 64px;
+  background-color: var(--color-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.page-header__avatar img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Сетка карточек предметов */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 32px 0;
+}
+
+/* Карточка предмета */
+.subject-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.15);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: transform 0.2s ease;
+}
+
+.subject-card:hover {
+  transform: translateY(-4px);
+}
+
+.subject-card__icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+}
+
+.subject-card__title {
+  font-size: 1.25rem;
+  margin: 0;
+  text-align: center;
+}
+
+.subject-card__icon--empty {
+  width: 48px;
+  height: 48px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  display: inline-block;
+}

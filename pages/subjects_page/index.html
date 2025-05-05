@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Блоки заданий</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="/pages/subjects_page/styles.css" rel="stylesheet">
+</head>
+
+<body>
+    {% set page_title = "Блоки заданий" %}
+    {% include "components/page_header.html" %}
+
+    <main class="container">
+        <div class="subjects-grid">
+            {% set subject_icons = {
+            "mathematics": "math.svg",
+            "russian-language": "russian.svg",
+            "nature": "world.svg",
+            "chemistry": "chemistry.svg",
+            "reading": "reading.svg",
+            "physical-education": "pe.svg",
+            "art": "art.svg",
+            "music": "music.svg",
+            "informatics": "informatics.svg",
+            "astronomy": "astronomy.svg",
+            "foreign-language": "foreign.svg",
+            "history": "history.svg",
+            "physics": "physics.svg",
+            "social-science": "social.svg"
+            } %}
+            {% for subject, subject_name in available_subjects.items() %}
+            <a href="/subjects/{{ subject }}" class="subject-card">
+                {% if subject in subject_icons %}
+                <img src="icons/{{ subject_icons[subject] }}" alt="{{ subject_name }}" class="subject-card__icon">
+                {% else %}
+                <div class="subject-card__icon subject-card__icon--empty"></div>
+                {% endif %}
+                <h2 class="subject-card__title">{{ subject_name }}</h2>
+            </a>
+            {% endfor %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

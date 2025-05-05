@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профили детей</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/pages/subjects_page/styles.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f5ff;
+        }
+
+        .child-panel {
+            background-color: #f1ebff;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #f1ebff !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 15px !important;
+        }
+
+        .btn-action {
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin-left: 5px;
+        }
+
+        .child-details {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 15px;
+        }
+
+        .child-details.active {
+            display: block;
+        }
+
+        .edit-mode .form-control,
+        .edit-mode .form-select {
+            background-color: white !important;
+        }
+
+        .edit-mode .readonly-field {
+            display: none;
+        }
+
+        .non-edit-mode .edit-field {
+            display: none;
+        }
+
+        .btn-primary {
+            background-color: #4b0082 !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 30px !important;
+        }
+
+        .child-details label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .child-details .readonly-field {
+            background-color: #f1ebff;
+            border-radius: 15px;
+            padding: 10px 15px;
+        }
+
+        .save-changes-btn {
+            display: none;
+        }
+
+        .edit-mode .save-changes-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .form-control,
+        .form-select,
+        .readonly-field,
+        .edit-field {
+            background-color: #f1ebff !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 15px !important;
+            width: 100%;
+        }
+
+        .form-control:disabled,
+        .form-select:disabled,
+        .form-control[readonly],
+        .form-select[readonly] {
+            background-color: #f1ebff !important;
+            opacity: 1;
+        }
+
+        .form-control:hover,
+        .form-select:hover,
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #f1ebff !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    {% set page_title = "Профили детей" %}
+    {% include "components/page_header.html" %}
+
+    <div class="container" id="childrenList">
+        <!-- Здесь будут отображаться панели детей -->
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/add-child">
+            <img src="icons/add_user.svg" alt="Добавить ребенка" style="width: 60px; height: 60px;">
+        </a>
+    </div>
+
+    <script>
+        async function loadChildren() {
+            try {
+                const response = await fetch('/get_childs');
+                const children = await response.json();
+                const container = document.getElementById('childrenList');
+
+                children.forEach(child => {
+                    const panel = createChildPanel(child);
+                    container.appendChild(panel);
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке списка детей:', error);
+            }
+        }
+
+        function createChildPanel(child) {
+            const panel = document.createElement('div');
+            panel.className = 'child-panel non-edit-mode';
+            panel.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>${child.surname} ${child.name} ${child.patronymic}</h3>
+                        <p>Класс: ${child.current_class}</p>
+                    </div>
+                    <div>
+                        <button onclick="window.location.href='/child_subjects/${child.uid}'" class="btn btn-action">
+                            <i class="bi bi-book"></i>
+                        </button>
+                        <button onclick="toggleEdit(this)" class="btn btn-action edit-btn">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button onclick="toggleDetails('${child.uid}', this)" class="btn btn-action">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="child-details" id="details-${child.uid}">
+                    <!-- Здесь будет подробная информация -->
+                </div>
+            `;
+            return panel;
+        }
+
+        async function loadChildDetails(uid) {
+            try {
+                const response = await fetch(`/get_child_info/${uid}`);
+                const details = await response.json();
+                return details;
+            } catch (error) {
+                console.error('Ошибка при загрузке информации о ребёнке:', error);
+                return null;
+            }
+        }
+
+        async function toggleDetails(uid, button) {
+            const detailsDiv = document.getElementById(`details-${uid}`);
+            const icon = button.querySelector('i');
+
+            if (!detailsDiv.classList.contains('active')) {
+                const details = await loadChildDetails(uid);
+                if (details) {
+                    detailsDiv.innerHTML = createDetailsHTML(details);
+                }
+                detailsDiv.classList.add('active');
+                icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+            } else {
+                detailsDiv.classList.remove('active');
+                icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+            }
+        }
+
+        function toggleEdit(button) {
+            const panel = button.closest('.child-panel');
+            const icon = button.querySelector('i');
+
+            if (panel.classList.contains('non-edit-mode')) {
+                panel.classList.remove('non-edit-mode');
+                panel.classList.add('edit-mode');
+                icon.classList.replace('bi-pencil', 'bi-x');
+                makeFieldsEditable(panel, true);
+                loadSchools(panel);
+            } else {
+                panel.classList.remove('edit-mode');
+                panel.classList.add('non-edit-mode');
+                icon.classList.replace('bi-x', 'bi-pencil');
+                makeFieldsEditable(panel, false);
+            }
+        }
+
+        function createDetailsHTML(details) {
+            return `
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Школа</label>
+                        <div class="readonly-field">${details.school || ''}</div>
+                        <input type="text" class="form-control edit-field" name="school" list="schoolsList" value="${details.school || ''}" readonly>
+                        <datalist id="schoolsList">
+                            <!-- Будет заполнено через JavaScript -->
+                        </datalist>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Пол</label>
+                        <div class="readonly-field">${details.gender === 'male' ? 'Мужской' : 'Женский'}</div>
+                        <select class="form-select edit-field" name="gender">
+                            <option value="male" ${details.gender === 'male' ? 'selected' : ''}>Мужской</option>
+                            <option value="female" ${details.gender === 'female' ? 'selected' : ''}>Женский</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Класс</label>
+                        <div class="readonly-field">${details.current_class || ''}</div>
+                        <select class="form-select edit-field" name="current_class">
+                            ${Array.from({ length: 11 }, (_, i) => i + 1)
+                    .map(num => `<option value="${num}" ${details.current_class == num ? 'selected' : ''}>${num}</option>`)
+                    .join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Физкультурная группа</label>
+                        <div class="readonly-field">${getPhysicalGroupName(details.physical_group)}</div>
+                        <select class="form-select edit-field" name="physical_group">
+                            <option value="main" ${details.physical_group === 'main' ? 'selected' : ''}>Основная</option>
+                            <option value="preparatory" ${details.physical_group === 'preparatory' ? 'selected' : ''}>Подготовительная</option>
+                            <option value="special" ${details.physical_group === 'special' ? 'selected' : ''}>Специальная</option>
+                            <option value="exempt" ${details.physical_group === 'exempt' ? 'selected' : ''}>Освобожден</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>1-й Иностранный язык</label>
+                        <div class="readonly-field">${getLanguageName(details.languages[0])}</div>
+                        <select class="form-select edit-field" name="first_language">
+                            <option value="english" ${details.languages[0] === 'english' ? 'selected' : ''}>Английский</option>
+                            <option value="german" ${details.languages[0] === 'german' ? 'selected' : ''}>Немецкий</option>
+                            <option value="french" ${details.languages[0] === 'french' ? 'selected' : ''}>Французский</option>
+                            <option value="spanish" ${details.languages[0] === 'spanish' ? 'selected' : ''}>Испанский</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>2-й Иностранный язык</label>
+                        <div class="readonly-field">${getLanguageName(details.languages[1])}</div>
+                        <select class="form-select edit-field" name="second_language">
+                            <option value="none" ${!details.languages[1] ? 'selected' : ''}>Не изучает</option>
+                            <option value="english" ${details.languages[1] === 'english' ? 'selected' : ''}>Английский</option>
+                            <option value="german" ${details.languages[1] === 'german' ? 'selected' : ''}>Немецкий</option>
+                            <option value="french" ${details.languages[1] === 'french' ? 'selected' : ''}>Французский</option>
+                            <option value="spanish" ${details.languages[1] === 'spanish' ? 'selected' : ''}>Испанский</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Email</label>
+                        <div class="readonly-field">${details.email || ''}</div>
+                        <input type="email" class="form-control edit-field" name="email" value="${details.email || ''}" readonly>
+                    </div>
+                </div>
+                <div class="save-changes-btn">
+                    <button onclick="confirmSaveChanges(this)" class="btn btn-primary">Сохранить изменения</button>
+                </div>
+            `;
+        }
+
+        function getPhysicalGroupName(group) {
+            const groups = {
+                'main': 'Основная',
+                'preparatory': 'Подготовительная',
+                'special': 'Специальная',
+                'exempt': 'Освобожден'
+            };
+            return groups[group] || '';
+        }
+
+        function getLanguageName(lang) {
+            const languages = {
+                'english': 'Английский',
+                'german': 'Немецкий',
+                'french': 'Французский',
+                'spanish': 'Испанский',
+                'none': 'Не изучает'
+            };
+            return languages[lang] || 'Не изучает';
+        }
+
+        function makeFieldsEditable(panel, editable) {
+            const inputs = panel.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                input.readOnly = !editable;
+            });
+        }
+
+        function confirmSaveChanges(button) {
+            if (confirm('Вы уверены, что хотите сохранить изменения?')) {
+                saveChanges(button);
+            }
+        }
+
+        async function saveChanges(button) {
+            const panel = button.closest('.child-panel');
+            const uid = panel.querySelector('.child-details').id.replace('details-', '');
+
+            const formData = {
+                school: panel.querySelector('[name="school"]').value,
+                gender: panel.querySelector('[name="gender"]').value,
+                current_class: panel.querySelector('[name="current_class"]').value,
+                physical_group: panel.querySelector('[name="physical_group"]').value,
+                languages: [
+                    panel.querySelector('[name="first_language"]').value,
+                    panel.querySelector('[name="second_language"]').value === 'none' ? null : panel.querySelector('[name="second_language"]').value
+                ].filter(Boolean),
+                email: panel.querySelector('[name="email"]').value
+            };
+
+            try {
+                console.log(JSON.stringify(formData));
+                const response = await fetch(`/update_child/${uid}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('Изменения сохранены успешно!');
+                    const details = await loadChildDetails(uid);
+                    if (details) {
+                        panel.querySelector('.child-details').innerHTML = createDetailsHTML(details);
+                    }
+                    toggleEdit(panel.querySelector('.edit-btn'));
+                } else {
+                    alert('Ошибка при сохранении изменений');
+                }
+            } catch (error) {
+                console.error('Ошибка при сохранении:', error);
+                alert('Ошибка при сохранении изменений');
+            }
+        }
+
+        async function loadSchools(panel) {
+            try {
+                const response = await fetch('/available_schools');
+                const schools = await response.json();
+                const datalist = panel.querySelector('#schoolsList');
+                datalist.innerHTML = '';
+
+                schools.forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school;
+                    datalist.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке списка школ:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadChildren);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

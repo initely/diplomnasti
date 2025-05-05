@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление ребёнка</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600&display=swap"
+        rel="stylesheet"> -->
+
+    <link href="/pages/subjects_page/styles.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f5ff;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #f1ebff !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 15px !important;
+        }
+
+        .btn-primary {
+            background-color: #4b0082 !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 30px !important;
+        }
+
+        /* Ограничение ширины только для формы */
+        .container.mt-5 {
+            max-width: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    {% set page_title = "Добавление ребёнка" %}
+    {% include "components/page_header.html" %}
+
+    <div class="container mt-5">
+        <form>
+            <div class="mb-3">
+                <input type="text" class="form-control" placeholder="Фамилия" required>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" placeholder="Имя" required>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" placeholder="Отчество" required>
+            </div>
+            <div class="mb-3">
+                <select class="form-select" required>
+                    <option value="" disabled selected>Пол</option>
+                    <option value="male">Мужской</option>
+                    <option value="female">Женский</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <select class="form-select" required>
+                    <option value="" disabled selected>Класс</option>
+                    <script>
+                        for (let i = 1; i <= 11; i++) {
+                            document.write(`<option value="${i}">${i}</option>`);
+                        }
+                    </script>
+                </select>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" id="schoolInput" list="schoolsList" placeholder="Школа"
+                    required>
+                <datalist id="schoolsList">
+                    <!-- Будет заполнено через JavaScript -->
+                </datalist>
+            </div>
+            <div class="mb-3">
+                <select class="form-select" required>
+                    <option value="" disabled selected>Физкультурная группа</option>
+                    <option value="main">Основная</option>
+                    <option value="preparatory">Подготовительная</option>
+                    <option value="special">Специальная</option>
+                    <option value="exempt">Освобожден</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <select class="form-select" required>
+                    <option value="" disabled selected>1 Иностранный язык</option>
+                    <option value="english">Английский</option>
+                    <option value="german">Немецкий</option>
+                    <option value="french">Французский</option>
+                    <option value="spanish">Испанский</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <select class="form-select" required>
+                    <option value="" disabled selected>2 Иностранный язык</option>
+                    <option value="none">Не изучает</option>
+                    <option value="english">Английский</option>
+                    <option value="german">Немецкий</option>
+                    <option value="french">Французский</option>
+                    <option value="spanish">Испанский</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <input type="email" class="form-control" placeholder="Email" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" placeholder="Пароль" required>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Загрузка списка школ при загрузке страницы
+        fetch('/available_schools')
+            .then(response => response.json())
+            .then(schools => {
+                const datalist = document.getElementById('schoolsList');
+                schools.forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school;
+                    datalist.appendChild(option);
+                });
+            });
+
+        // Обработка отправки формы
+        document.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                surname: e.target[0].value,
+                name: e.target[1].value,
+                patronymic: e.target[2].value,
+                gender: e.target[3].value,
+                current_class: e.target[4].value,
+                school: e.target[5].value,
+                physical_group: e.target[6].value,
+                first_language: e.target[7].value,
+                second_language: e.target[8].value,
+                email: e.target[9].value,
+                password: e.target[10].value
+            };
+
+            try {
+                const response = await fetch('/create_children', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Ребёнок успешно добавлен!');
+                    window.location.href = '/me';
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Произошла ошибка при добавлении ребёнка');
+                }
+            } catch (error) {
+                alert('Произошла ошибка при отправке данных');
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

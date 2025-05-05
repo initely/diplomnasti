@@ -1,0 +1,120 @@
+<header class="page-header mb-4">
+    <style>
+        .page-header {
+            background-color: #f3f0ff;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .page-header__inner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 0 70px;
+        }
+
+        .page-header__title {
+            color: #333;
+            font-weight: 500;
+            margin: 0;
+            text-align: center;
+            width: 100%;
+            font-size: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .page-header__title {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header__title {
+                font-size: 20px;
+            }
+        }
+
+        .page-header__home {
+            position: absolute;
+            left: 30px;
+            text-decoration: none;
+            color: #6c757d;
+        }
+
+        .page-header__home img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .page-header__home:hover {
+            color: #4b0082;
+        }
+
+        .page-header__avatar {
+            position: absolute;
+            right: 0;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #6c757d;
+        }
+
+        .page-header__avatar img {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        .page-header__avatar:hover {
+            color: #4b0082;
+        }
+
+        .page-header__logout {
+            position: absolute;
+            right: 30px;
+            text-decoration: none;
+            color: #6c757d;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .page-header__logout:hover {
+            color: #4b0082;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-link {
+            color: #6c757d;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #4b0082;
+        }
+    </style>
+    <div class="container">
+        <div class="page-header__inner">
+
+            {% if page_title != "Главная страница" %}
+            <a href="/" class="page-header__home">
+                <img src="/icons/home.png" alt="" style="width: 50px; height: 50px;">
+            </a>
+            {% endif %}
+
+            <h1 class="page-header__title">{{ page_title }}</h1>
+            {% if additional_content is defined %}
+            {{ additional_content | safe }}
+            {% elif page_title == "Личный кабинет" %}
+            <a href="/me" class="page-header__avatar">
+                <img src="/icons/user.svg" alt="Профиль">
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</header>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="/pages/subjects_page/styles.css" rel="stylesheet">
+    <link href="pages/main_page/styles.css" rel="stylesheet">
+</head>
+
+<body>
+    {% set page_title = "Личный кабинет" %}
+
+    {% include "components/page_header.html" %}
+
+    <div class="container mt-4">
+        <!-- Информация о пользователе -->
+        <div class="user-info">
+            <h2>Добро пожаловать, {{ user.full_name }}!</h2>
+        </div>
+
+        <!-- Навигационные карточки -->
+        <div class="navigation-cards">
+            {% if role == 'child' %}
+            <a href="/subjects" class="nav-card">
+                <h2 class="nav-card__title">Блоки заданий</h2>
+                <img src="icons/subjects.svg" alt="Блоки заданий" class="nav-card__icon">
+            </a>
+            <a href="/statistics" class="nav-card">
+                <h2 class="nav-card__title">Статистика</h2>
+                <img src="icons/statistics.svg" alt="Статистика" class="nav-card__icon">
+            </a>
+
+            {% elif role == 'parent' %}
+            <a href="/children-profiles" class="nav-card">
+                <h2 class="nav-card__title">Профиль детей</h2>
+                <img src="icons/children.svg" alt="Профиль детей" class="nav-card__icon">
+            </a>
+
+            <a href="/statistics" class="nav-card">
+                <h2 class="nav-card__title">Статистика</h2>
+                <img src="icons/statistics.svg" alt="Статистика" class="nav-card__icon">
+            </a>
+
+            {% elif role == 'psychologist' %}
+            <a href="/parents-database" class="nav-card">
+                <h2 class="nav-card__title">База данных родителей</h2>
+                <img src="icons/users.svg" alt="База данных родителей" class="nav-card__icon">
+            </a>
+            <a href="/add-parent" class="nav-card">
+                <h2 class="nav-card__title">Добавление нового родителя</h2>
+                <img src="icons/add_user.svg" alt="Добавление нового родителя" class="nav-card__icon">
+            </a>
+            <a href="/children-database" class="nav-card">
+                <h2 class="nav-card__title">База данных детей</h2>
+                <img src="icons/users.svg" alt="База данных детей " class="nav-card__icon">
+            </a>
+
+            <a href="/children-statistics" class="nav-card">
+                <h2 class="nav-card__title">Статистика детей</h2>
+                <img src="icons/statistics.svg" alt="Статистика детей" class="nav-card__icon">
+            </a>
+            {% elif role == 'admin' %}
+
+            <a href="/users-database" class="nav-card">
+                <h2 class="nav-card__title">База данных пользователей</h2>
+                <img src="icons/users.svg" alt="База данных пользователей" class="nav-card__icon">
+            </a>
+            <a href="/add-user" class="nav-card">
+                <h2 class="nav-card__title">Добавление нового пользователя</h2>
+                <img src="icons/add_user.svg" alt="Добавление нового пользователя" class="nav-card__icon">
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
