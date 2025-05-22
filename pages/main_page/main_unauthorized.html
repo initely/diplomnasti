@@ -10,44 +10,46 @@
         rel="stylesheet">
     <link href="/pages/subjects_page/styles.css" rel="stylesheet">
     <style>
+        html,
         body {
-            background-color: #f3f0ff;
+            height: 100%;
         }
 
-        .modal-content {
-            background-color: #f3f0ff;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .form-control {
-            background-color: #e8e6ff;
-            border: none;
-            border-radius: 25px;
-            padding: 12px 20px;
-            color: #666;
+        .container.mt-5 {
+            flex: 1 0 auto;
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
         }
 
-        .form-control::placeholder {
-            color: #8e8e8e;
+        .footer {
+            background: #f3f0ff;
+            color: #7e57c2;
+            font-size: 1.1rem;
+            border-top: 1px solid #e0e0e0;
+            flex-shrink: 0;
         }
 
-        .btn-primary {
-            background-color: #7e57c2;
-            border: none;
-            border-radius: 25px;
-            padding: 12px 30px;
-            color: white;
-            transition: background-color 0.3s ease;
+        .info-block {
+            background: #e8e6ff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(126, 87, 194, 0.07);
+            margin-bottom: 1.5rem;
+            font-size: 1.7rem;
+            line-height: 1.7;
+            padding: 3rem 2.5rem;
         }
 
-        .btn-primary:hover {
-            background-color: #6a4caf;
-        }
-
-        .modal-title {
-            color: #333;
-            font-weight: 500;
+        .ellipse-img-only {
+            width: 440px;
+            height: 500px;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -64,12 +66,33 @@
 
     <!-- Основной контент -->
     <div class="container mt-5">
-        <h1>Добро пожаловать</h1>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-            magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-            commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-            nulla pariatur.</p>
+        <div class="row align-items-center">
+            <div class="col-md-5 mb-4 mb-md-0 d-flex flex-column justify-content-center align-items-stretch gap-4">
+                <div class="info-block p-5 rounded shadow-sm bg-white h-100 d-flex align-items-center">
+                    <p class="mb-0">Определение будущей профессии это важный шаг, о котором нужно задуматься как можно
+                        раньше и мы в этом поможем</p>
+                </div>
+            </div>
+            <div class="col-md-5 mb-4 mb-md-0 d-flex flex-column justify-content-center align-items-stretch gap-4">
+                <div class="info-block p-5 rounded shadow-sm bg-white h-100 d-flex align-items-center">
+                    <p class="mb-0">У нас ты сможешь пройти тесты на определение твоих уклонов в интересном формате, без
+                        нудных философских тестов</p>
+                </div>
+            </div>
+            <div class="col-md-2 d-flex justify-content-center align-items-center">
+                <img src="/icons/main_person.png" alt="Фото" class="ellipse-img-only">
+            </div>
+        </div>
     </div>
+
+    <!-- Подвал -->
+    <footer class="footer mt-5 py-4 bg-light text-center">
+        <div class="container">
+            <span class="text-muted">Контакты: <a href="#"
+                    onclick="copyEmail(event); return false;">anastasia.kukaeva@yandex.ru</a> | <a
+                    href="https://t.me/anasgrei" target="_blank">@anasgrei</a></span>
+        </div>
+    </footer>
 
     <!-- Модальное окно входа -->
     <div class="modal fade" id="loginModal" tabindex="-1">
@@ -231,6 +254,22 @@
             document.getElementById('registerError').classList.add('d-none');
             document.getElementById('registerForm').reset();
         });
+
+        function copyEmail(event) {
+            event.preventDefault();
+            const email = 'anastasia.kukaeva@yandex.ru';
+            const textArea = document.createElement('textarea');
+            textArea.value = email;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('Email скопирован в буфер обмена!');
+            } catch (err) {
+                console.error('Ошибка при копировании: ', err);
+            }
+            document.body.removeChild(textArea);
+        }
     </script>
 </body>
 

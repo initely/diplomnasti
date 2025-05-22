@@ -44,14 +44,6 @@ templates = Jinja2Templates(directory="pages")
 
 # ----------------- Эндпоинты -----------------
 
-# Эндпоинт, доступный только авторизованным пользователям
-@app.get("/protected")
-async def protected_route(request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):
-    log_request(request, current_user)
-    response = {"message": f"Hello, {current_user['full_name']}! This is a protected endpoint."}
-    log_response(response)
-    return response
-
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, current_user: Optional[Dict[str, Any]] = None):
     log_request(request, current_user)

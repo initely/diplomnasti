@@ -145,36 +145,6 @@ async def register(user_data: UserRegister):
         raise HTTPException(status_code=400, detail="Неверные данные для регистрации")
 
 
-@router.post("/create_user", status_code=status.HTTP_201_CREATED)
-async def create_user(user_data: UserRegister, current_user: Dict[str, Any] = Depends(get_current_user)):
-    # Проверка прав доступа (потом реализуем)
-    # if current_user["role"] not in ["admin", "school_worker", "parent"]:
-    #     raise HTTPException(status_code=403, detail="Недостаточно прав для создания пользователей")
-    
-    # Проверка существования пользователя с таким же username или email
-    existing = await User.filter(username=user_data.username).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Пользователь с таким именем уже существует")
-
-    existing_email = await User.filter(email=user_data.email).first()
-    if existing_email:
-        raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
-
-    # Хэширование пароля
-    hashed = hash_password(user_data.password)
-
-    # Создание нового пользователя (с указанной ролью)
-    new_user = await User.create(
-        username=user_data.username,
-        email=user_data.email,
-        hashed_password=hashed,
-        role=user_data.role,
-        full_name=user_data.full_name,
-        current_class=user_data.current_class,
-    )
-
-    return {"message": "Пользователь успешно создан", "user_id": new_user.id}
-
 
 @router.post("/login")
 async def login(login_data: UserLogin, response: Response):
@@ -352,6 +322,3 @@ async def create_parent(
             detail="Ошибка при создании родителя"
         )
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
