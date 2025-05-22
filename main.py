@@ -37,7 +37,7 @@ app.include_router(tasks_router)
 app.mount("/pages", StaticFiles(directory="pages"), name="pages")
 app.mount("/icons", StaticFiles(directory="icons"), name="icons")
 
-app.mount("/db", StaticFiles(directory="db"), name="images")
+#app.mount("/db", StaticFiles(directory="db"), name="images")
 
 # Настройка шаблонов
 templates = Jinja2Templates(directory="pages")

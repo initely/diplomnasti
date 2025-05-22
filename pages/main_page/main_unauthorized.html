@@ -19,6 +19,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            background-color: #f3f0ff;
         }
 
         .container.mt-5 {
@@ -26,6 +27,42 @@
             min-height: 60vh;
             display: flex;
             align-items: center;
+        }
+
+        .modal-content {
+            background-color: #f3f0ff;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control {
+            background-color: #e8e6ff;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 20px;
+            color: #666;
+        }
+
+        .form-control::placeholder {
+            color: #8e8e8e;
+        }
+
+        .btn-primary {
+            background-color: #7e57c2;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #6a4caf;
+        }
+
+        .modal-title {
+            color: #333;
+            font-weight: 500;
         }
 
         .footer {
