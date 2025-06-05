@@ -7,10 +7,46 @@
     <title>Профили детей</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="/pages/styles/common.css" rel="stylesheet">
     <style>
         body {
             background-color: #f8f5ff;
+        }
+
+        .help-icon {
+            cursor: pointer;
+            margin-right: 10px;
+            color: #4b0082;
+            font-size: 1.8rem;
+            float: right;
+            margin-bottom: 20px;
+        }
+
+        .tooltip-content {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 600px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            font-size: 1.35rem;
+            line-height: 1.4;
+            top: 100%;
+            margin-top: 10px;
+            right: 0;
+        }
+
+        .tooltip-content.show {
+            display: block;
+        }
+
+        .tooltip-content ol {
+            padding-left: 20px;
+            margin: 10px 0;
         }
 
         .child-panel {
@@ -123,6 +159,22 @@
     {% set page_title = "Профили детей" %}
     {% include "components/page_header.html" %}
 
+    <div style="position: relative; margin-bottom: 20px;">
+        <div style="position: absolute; top: 0; right: 15px; z-index: 1;">
+            <i class="fas fa-question-circle help-icon" id="helpIcon"></i>
+            <div class="tooltip-content" id="tooltip">
+                <strong>Инструкция по редактированию профиля ребенка</strong>
+                <ol>
+                    <li>На вкладке «Профили детей» нажмите на знак выпадающего списка, потом на значок карандаша, для
+                        редактирования.</li>
+                    <li>Измените имеющуюся информацию на нужную.</li>
+                    <li>Нажмите на копку «Сохранить».</li>
+                    <li>Подтвердите сохранение изменений.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
     <div class="container" id="childrenList">
         <!-- Здесь будут отображаться панели детей -->
     </div>
@@ -134,6 +186,21 @@
     </div>
 
     <script>
+        // Добавляем обработчики для всплывающей подсказки
+        const helpIcon = document.getElementById('helpIcon');
+        const tooltip = document.getElementById('tooltip');
+
+        function showTooltip() {
+            tooltip.classList.add('show');
+        }
+
+        function hideTooltip() {
+            tooltip.classList.remove('show');
+        }
+
+        helpIcon.addEventListener('mouseenter', showTooltip);
+        helpIcon.addEventListener('mouseleave', hideTooltip);
+
         async function loadChildren() {
             try {
                 const response = await fetch('/get_childs');
@@ -243,11 +310,11 @@
                     <div class="col-md-6 mb-3">
                         <label>Класс</label>
                         <div class="readonly-field">${details.current_class || ''}</div>
-                        <select class="form-select edit-field" name="current_class">
-                            ${Array.from({ length: 11 }, (_, i) => i + 1)
-                    .map(num => `<option value="${num}" ${details.current_class == num ? 'selected' : ''}>${num}</option>`)
-                    .join('')}
-                        </select>
+                        <input type="text" class="form-control edit-field" name="current_class" 
+                            pattern="[1-9][0-9]?[А-Яа-я]" 
+                            placeholder="Например: 5А" 
+                            value="${details.current_class || ''}"
+                            oninput="this.value = this.value.replace(/[^1-9А-Яа-я]/g, '').toUpperCase()">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label>Физкультурная группа</label>
