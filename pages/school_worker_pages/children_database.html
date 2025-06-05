@@ -255,7 +255,7 @@
                 row.innerHTML = `
                     <td>${(currentPage - 1) * rowsPerPage + index + 1}</td>
                     <td>${child.login || ''}</td>
-                    <td><a href="/child/${child.id}" style="text-decoration: none; color: inherit;">${child.full_name || ''}</a></td>
+                    <td><a href="/child/${child.id}" style="text-decoration: none;">${child.full_name || ''}</a></td>
                     <td>${child.current_class || ''}</td>
                     <td>${child.parent_name || ''}</td>
                 `;

@@ -239,21 +239,21 @@ async def websocket_endpoint(websocket: WebSocket, task_id: int, current_user: U
             
     except WebSocketDisconnect:
         if session_id in active_sessions:
-            del active_sessions[session_id] 
-
+            del active_sessions[session_id]
 
 templates = Jinja2Templates(directory="pages")
 
 @router.get("/testtask")
-def testtask(request: Request):
+def testtask(request: Request, current_user: User = Depends(child_required)):
     return templates.TemplateResponse(
         "testtask/testtask.html", 
         {
-            "request": request        }
+            "request": request
+        }
     )
 
 @router.get("/subjects/{subject}/{task_id}", response_class=HTMLResponse)
-async def get_task(subject: str, task_id: str, request: Request):
+async def get_task(subject: str, task_id: str, request: Request, current_user: User = Depends(child_required)):
     try:
         # Загружаем базовый шаблон
         base_template = templates.get_template("tasks/base_task.html")

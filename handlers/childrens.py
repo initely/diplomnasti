@@ -2,10 +2,8 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from models.user import User, get_current_user, child_required, is_parent_of_child, parent_or_school_worker_required, update_child_details
-from models.result import Result
 from utils.logger import log_request, log_response, log_error
-from models.task import Task
-from datetime import datetime, timedelta
+from models.result import Result
 
 router = APIRouter()
 templates = Jinja2Templates(directory="pages")
@@ -50,19 +48,6 @@ def get_available_subjects(user):
         subjects["social-science"] = "Обществознание"
 
     return subjects
-
-@router.get("/statistics", response_class=HTMLResponse)
-async def statistics(
-    request: Request,
-    current_user: User = Depends(get_current_user)
-):
-    return templates.TemplateResponse(
-        "statistics_page/index.html",
-        {
-            "request": request,
-            "current_user": current_user
-        }
-    )
 
 @router.get("/subjects", response_class=HTMLResponse)
 async def subjects(
@@ -218,103 +203,99 @@ async def update_child(
         log_error(e, "Ошибка при обновлении информации о ребенке")
         raise
 
-async def create_test_data(child_id: str):
-    """Создает тестовые данные для демонстрации статистики"""
-    try:
-        # Создаем тестовые задания
-        tasks = [
-            await Task.create(
-                subjects_name="Математика",
-                name="Контрольная работа №1",
-                type="score",
-                max_score=5
-            ),
-            await Task.create(
-                subjects_name="Русский язык",
-                name="Диктант",
-                type="score",
-                max_score=5
-            ),
-            await Task.create(
-                subjects_name="Физкультура",
-                name="Бег 100 метров",
-                type="time",
-                max_score=None
-            )
-        ]
-
-        # Создаем результаты для каждого задания
-        for i, task in enumerate(tasks):
-            # Создаем несколько результатов с разными датами
-            for days_ago in range(3):
-                date = datetime.now() - timedelta(days=days_ago)
-                await Result.create(
-                    user_id=child_id,
-                    task=task,
-                    score=4.5 if task.type == "score" else 12.5,  # 4.5 балла или 12.5 секунд
-                    time_seconds=12.5 if task.type == "time" else None,
-                    created_at=date
-                )
-
-        return True
-    except Exception as e:
-        log_error(e, "Ошибка при создании тестовых данных")
-        return False
-
-@router.get("/get_child_statistics/{child_id}")
-async def get_child_statistics(
+@router.get("/my_statistics", response_class=HTMLResponse)
+async def my_statistics(
     request: Request,
-    child_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(child_required)
 ):
     log_request(request, current_user)
     try:
-        # Проверяем права доступа
-        if current_user.role == "parent":
-            if not await is_parent_of_child(current_user.id, child_id):
-                log_error(Exception("Попытка доступа к чужому ребенку"), f"Child ID: {child_id}")
-                raise HTTPException(status_code=403, detail="Доступ запрещен")
-        elif current_user.role == "psychologist":
-            child = await User.get(id=child_id)
-            if not child:
-                raise HTTPException(status_code=404, detail="Ребенок не найден")
-            
-            # Загружаем школу ребенка
-            await child.fetch_related('school')
-            # Загружаем школу работника
-            await current_user.fetch_related('school')
-            
-            if not child.school or not current_user.school or child.school.id != current_user.school.id:
-                log_error(Exception("Попытка доступа к ребенку из другой школы"), f"Child ID: {child_id}")
-                raise HTTPException(status_code=403, detail="Доступ запрещен")
+        log_response({
+            "message": "Открыта страница статистики",
+            "child_id": current_user.id
+        })
+        
+        return templates.TemplateResponse(
+            "children_pages/my_statistics.html",
+            {
+                "request": request,
+                "current_user": current_user
+            }
+        )
+    except Exception as e:
+        log_error(e, "Ошибка при открытии страницы статистики")
+        raise
 
-        # Проверяем, есть ли результаты
-        results = await Result.filter(user_id=child_id).prefetch_related('task').order_by('-created_at').all()
+@router.get("/get_my_statistics")
+async def get_my_statistics(
+    request: Request,
+    offset: int = 0,
+    limit: int = 10,
+    search: str = "",
+    sort_field: str = "created_at",
+    sort_direction: str = "desc",
+    current_user: User = Depends(child_required)
+):
+    log_request(request, current_user)
+    try:
+        # Получаем все результаты ребенка
+        results = await Result.filter(user_id=current_user.id).prefetch_related('task')
         
-        # Если результатов нет, создаем тестовые данные
-        if not results:
-            await create_test_data(child_id)
-            results = await Result.filter(user_id=child_id).prefetch_related('task').order_by('-created_at').all()
+        # Фильтруем результаты по поисковому запросу
+        if search:
+            search = search.lower()
+            results = [
+                r for r in results if (
+                    search in str(current_user.current_class).lower() or
+                    search in r.task.subjects_name.lower()
+                )
+            ]
         
-        # Форматируем результаты
-        formatted_results = []
-        for result in results:
-            formatted_results.append({
-                "id": result.id,
-                "subject": result.task.subjects_name if result.task else "Неизвестный предмет",
+        # Сортируем результаты
+        if sort_field == "created_at":
+            results.sort(key=lambda x: x.created_at, reverse=(sort_direction == "desc"))
+        elif sort_field == "score":
+            results.sort(key=lambda x: x.score, reverse=(sort_direction == "desc"))
+        elif sort_field == "time_seconds":
+            results.sort(key=lambda x: x.time_seconds or 0, reverse=(sort_direction == "desc"))
+        elif sort_field == "confirmed":
+            results.sort(key=lambda x: x.confirmed, reverse=(sort_direction == "desc"))
+        elif sort_field == "current_class":
+            results.sort(key=lambda x: str(current_user.current_class), reverse=(sort_direction == "desc"))
+        elif sort_field == "subject":
+            results.sort(key=lambda x: x.task.subjects_name, reverse=(sort_direction == "desc"))
+        elif sort_field == "description":
+            results.sort(key=lambda x: x.task.description or "", reverse=(sort_direction == "desc"))
+        
+        # Применяем пагинацию
+        total = len(results)
+        paginated_results = results[offset:offset + limit]
+        
+        # Форматируем результаты для ответа
+        statistics = []
+        for result in paginated_results:
+            statistics.append({
+                "current_class": current_user.current_class,
+                "subject": result.task.subjects_name,
                 "score": result.score,
-                "max_score": result.task.max_score if result.task else 0,
-                "created_at": getattr(result, 'created_at', datetime.now()).strftime("%d.%m.%Y %H:%M"),
-                "details": result.task.name if result.task else ""
+                "max_score": result.task.max_score,
+                "time_seconds": result.time_seconds,
+                "description": result.task.description,
+                "confirmed": result.confirmed,
+                "created_at": result.created_at.isoformat()
             })
         
         log_response({
-            "message": "Получена статистика ребенка",
-            "child_id": child_id,
-            "results_count": len(formatted_results)
+            "message": "Получена статистика",
+            "total": total,
+            "offset": offset,
+            "limit": limit
         })
         
-        return formatted_results
+        return {
+            "total": total,
+            "statistics": statistics
+        }
     except Exception as e:
-        log_error(e, "Ошибка при получении статистики ребенка")
+        log_error(e, "Ошибка при получении статистики")
         raise

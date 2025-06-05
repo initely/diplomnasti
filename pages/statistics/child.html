@@ -113,36 +113,33 @@
         }
 
         .children-table-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: var(--color-card);
+            border-radius: var(--radius-card);
+            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.10);
+            padding: 32px 24px;
+            margin-top: 40px;
         }
 
         .children-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 1rem;
+            border-collapse: collapse;
+            color: var(--color-text);
+        }
+
+        .children-table th,
+        .children-table td {
+            border: 1px solid #a084ca;
+            padding: 12px 16px;
+            text-align: left;
         }
 
         .children-table th {
-            background: #f8f9fa;
-            color: #495057;
+            background: #ede7fa;
             font-weight: 600;
-            padding: 12px;
-            text-align: left;
-            border-bottom: 2px solid #dee2e6;
         }
 
-        .children-table td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-            color: #212529;
-        }
-
-        .children-table tr:hover {
-            background-color: #f8f9fa;
+        .children-table tr:nth-child(even) {
+            background: #f7f7ff;
         }
 
         .pagination-controls {
@@ -152,49 +149,80 @@
         }
 
         .pagination-btn {
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 6px 12px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #ede7fa;
+            color: #4b0082;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            padding: 0;
         }
 
-        .pagination-btn:hover:not(:disabled) {
-            background: #e9ecef;
+        .pagination-btn i {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .pagination-btn:hover {
+            background: #d8c7f7;
         }
 
         .pagination-btn:disabled {
-            opacity: 0.5;
+            background: #f3f0ff;
+            color: #a084ca;
             cursor: not-allowed;
         }
 
         .page-info {
             color: #6c757d;
-            font-size: 0.9rem;
+            font-size: 14px;
         }
 
         .total-count {
             color: #6c757d;
-            font-size: 0.9rem;
-            margin-left: 1rem;
+            font-size: 14px;
+            margin-left: 20px;
         }
 
         .no-results {
-            text-align: center;
-            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
             color: #6c757d;
+            font-size: 18px;
+            text-align: center;
         }
 
         .no-results i {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            font-size: 48px;
+            margin-bottom: 20px;
         }
 
         #rowsPerPage {
             border: 1px solid #dee2e6;
             border-radius: 4px;
             padding: 4px 8px;
+            width: auto;
+            min-width: 60px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 30px;
+        }
+
+        #rowsPerPage:focus {
+            outline: none;
+            border-color: #4b0082;
+            box-shadow: 0 0 0 2px rgba(75, 0, 130, 0.1);
         }
 
         .form-label {
@@ -371,9 +399,9 @@
                             <th>№</th>
                             <th>Предмет</th>
                             <th>Результат</th>
-                            <th>Максимальный балл</th>
-                            <th>Дата</th>
-                            <th>Детали</th>
+                            <th>Время выполнения</th>
+                            <th>Описание</th>
+                            <th>Статус</th>
                         </tr>
                     </thead>
                     <tbody id="statisticsTableBody">
@@ -495,9 +523,9 @@
                             <th>№</th>
                             <th>Предмет</th>
                             <th>Результат</th>
-                            <th>Максимальный балл</th>
-                            <th>Дата</th>
-                            <th>Детали</th>
+                            <th>Время выполнения</th>
+                            <th>Описание</th>
+                            <th>Статус</th>
                         </tr>
                     </thead>
                     <tbody id="statisticsTableBody"></tbody>
@@ -539,10 +567,10 @@
                 row.innerHTML = `
                     <td>${i + 1}</td>
                     <td>${result.subject}</td>
-                    <td>${result.score}</td>
-                    <td>${result.max_score}</td>
-                    <td>${result.created_at}</td>
+                    <td>${result.score} из ${result.max_score}</td>
+                    <td>${result.time_seconds ? result.time_seconds.toFixed(1) + ' сек' : '-'}</td>
                     <td>${result.details || '-'}</td>
+                    <td>${result.confirmed ? 'Подтверждено' : 'Не подтверждено'}</td>
                 `;
                 tbody.appendChild(row);
             }

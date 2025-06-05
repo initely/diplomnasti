@@ -86,12 +86,18 @@ class RedirectException(Exception):
 async def get_current_user(response: Response, session_id: Optional[str] = Cookie(None)) -> Optional[Dict[str, Any]]:
     if not session_id:
         response.delete_cookie("session_id")
-        raise RedirectException()
+        raise HTTPException(
+            status_code=401,
+            detail="Требуется авторизация"
+        )
 
     user = await User.filter(session_id=session_id).first()
     if not user:
         response.delete_cookie("session_id")
-        raise RedirectException()
+        raise HTTPException(
+            status_code=401,
+            detail="Требуется авторизация"
+        )
         
     return user
 

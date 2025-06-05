@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Статистика детей</title>
+    <title>Моя статистика</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/pages/styles/common.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
@@ -210,17 +210,13 @@
 </head>
 
 <body>
-    {% set page_title = "Статистика детей" %}
+    {% set page_title = "Моя статистика" %}
     {% include "components/page_header.html" %}
 
     <div class="container">
         <div class="children-table-container">
-            <div class="school-name mb-4">
-                <h4 class="text-left">{{ school_name }}</h4>
-            </div>
             <div class="search-container">
-                <input type="text" id="searchInput" class="search-input"
-                    placeholder="Поиск по ФИО, классу или предмету...">
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск по классу или предмету...">
                 <button id="clearSearch" class="clear-search-btn">Очистить</button>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -253,10 +249,6 @@
                                 <span class="header-text">№</span>
                             </th>
                             <th>
-                                <span class="sort-icon" data-sort="full_name"></span>
-                                <span class="header-text">ФИО</span>
-                            </th>
-                            <th>
                                 <span class="sort-icon" data-sort="current_class"></span>
                                 <span class="header-text">Класс</span>
                             </th>
@@ -273,7 +265,7 @@
                                 <span class="header-text">Время выполнения</span>
                             </th>
                             <th>
-                                <span class="sort-icon" data-sort="details"></span>
+                                <span class="sort-icon" data-sort="description"></span>
                                 <span class="header-text">Описание</span>
                             </th>
                             <th>
@@ -319,10 +311,6 @@
                                 <span class="header-text">№</span>
                             </th>
                             <th>
-                                <span class="sort-icon" data-sort="full_name"></span>
-                                <span class="header-text">ФИО</span>
-                            </th>
-                            <th>
                                 <span class="sort-icon" data-sort="current_class"></span>
                                 <span class="header-text">Класс</span>
                             </th>
@@ -339,7 +327,7 @@
                                 <span class="header-text">Время выполнения</span>
                             </th>
                             <th>
-                                <span class="sort-icon" data-sort="details"></span>
+                                <span class="sort-icon" data-sort="description"></span>
                                 <span class="header-text">Описание</span>
                             </th>
                             <th>
@@ -390,7 +378,7 @@
         async function loadStatistics() {
             const offset = (currentPage - 1) * rowsPerPage;
             try {
-                const response = await fetch(`/get_school_statistics?offset=${offset}&limit=${rowsPerPage}&search=${encodeURIComponent(searchQuery)}&sort_field=${currentSort.field}&sort_direction=${currentSort.direction}`);
+                const response = await fetch(`/get_my_statistics?offset=${offset}&limit=${rowsPerPage}&search=${encodeURIComponent(searchQuery)}&sort_field=${currentSort.field}&sort_direction=${currentSort.direction}`);
                 const data = await response.json();
                 totalRows = data.total;
                 allStatistics = data.statistics;
@@ -417,12 +405,11 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${(currentPage - 1) * rowsPerPage + index + 1}</td>
-                    <td><a href="/child/${stat.child_id}" style="text-decoration: none;">${stat.full_name}</a></td>
                     <td>${stat.current_class}</td>
                     <td>${stat.subject}</td>
                     <td>${stat.score} из ${stat.max_score}</td>
                     <td>${stat.time_seconds ? stat.time_seconds.toFixed(1) + ' сек' : '-'}</td>
-                    <td>${stat.details || '-'}</td>
+                    <td>${stat.description || '-'}</td>
                     <td>${getStatusBadge(stat.confirmed)}</td>
                 `;
                 tbody.appendChild(row);
