@@ -13,6 +13,7 @@ from models.user import User, child_required
 from models.task import Task
 from models.result import Result
 from utils.logger import log_error, log_request, log_response
+from jinja2 import Environment
 
 router = APIRouter()
 
@@ -250,46 +251,25 @@ def testtask(request: Request):
         {
             "request": request        }
     )
+
 @router.get("/subjects/{subject}/{task_id}", response_class=HTMLResponse)
-async def subject_page(
-    request: Request,
-    subject: str,
-    task_id: int,
-    current_user: User = Depends(child_required)
-):
-    log_request(request, current_user)
+async def get_task(subject: str, task_id: str, request: Request):
     try:
-        available_subjects = get_available_subjects(current_user)
-
-        if subject not in available_subjects:
-            log_error(Exception("Предмет не найден"), f"Subject: {subject}")
-            raise HTTPException(status_code=404, detail="Предмет не найден или недоступен для вас")
-
-        subject_name = available_subjects[subject]
-
-        task = await Task.get_or_none(id=task_id)
-        if not task:
-            log_error(Exception("Задание не найдено"), f"Task ID: {task_id}")
-            raise HTTPException(status_code=404, detail="Задание не найдено")
-
-
-        return templates.TemplateResponse(
-            "testtask/testtask.html", 
-            {
-                "request": request,
-                "subject": subject,
-                "subject_name": subject_name,
-                "current_user": current_user
-            }
+        # Загружаем базовый шаблон
+        base_template = templates.get_template("tasks/base_task.html")
+        
+        # Загружаем контент задания
+        task_content = templates.get_template(f"tasks/{subject}/task{task_id}/task{task_id}.html")
+        
+        # Рендерим контент задания
+        task_html = task_content.render()
+        
+        # Рендерим базовый шаблон с контентом задания
+        return base_template.render(
+            request=request,
+            title=f"Задание {task_id}",
+            task_content=task_html
         )
-
-
-        log_response({
-            "message": "Открыта страница c заданием",
-            "subject": subject,
-            "subject_name": subject_name
-        })
-
     except Exception as e:
-        log_error(e, "Ошибка при открытии страницы предмета")
-        raise
+        log_error(e, f"Ошибка при загрузке задания: subject={subject}, task_id={task_id}")
+        raise HTTPException(status_code=404, detail=str(e))

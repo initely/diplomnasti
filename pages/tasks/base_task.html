@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/pages/styles/common.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f5ff;
+        }
+
+        .instructions {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .start-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 15px 30px;
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .start-btn:hover {
+            background-color: #6a0dad;
+        }
+
+        .game-content {
+            display: none;
+        }
+
+        .game-content.active {
+            display: block;
+        }
+
+        .pause-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(75, 0, 130, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .pause-screen.active {
+            display: flex;
+        }
+
+        .pause-screen h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .pause-screen p {
+            font-size: 24px;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .pause-screen .resume-btn {
+            background-color: white;
+            color: #4b0082;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pause-screen .resume-btn:hover {
+            transform: scale(1.1);
+            background-color: #f0f0f0;
+        }
+
+        .play-pause-btn {
+            background-color: #4b0082 !important;
+            border: none !important;
+            border-radius: 50% !important;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            transition: transform 0.3s;
+        }
+
+        .play-pause-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .play-pause-btn i {
+            color: white;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    {% set page_title = title %}
+    {% include "components/page_header.html" %}
+
+    <div class="container mt-4">
+        <div class="instructions">
+            <h2 class="text-center mb-4">Инструкция</h2>
+            <ol>
+                <li>Чтобы выполнить задание, прочитай его внимательно.</li>
+                <li>Можно внести ответ в блок сразу, или перемещать предметы из задачи с выполнением условий, а потом
+                    записать ответ в нужный блок.</li>
+                <li>После ввода ответа, нажмите на кнопку «Проверить».</li>
+            </ol>
+            <button class="start-btn" id="startBtn">Начать задание</button>
+        </div>
+
+        <div class="game-content" id="gameContent">
+            <button class="play-pause-btn" id="playPauseBtn">
+                <i class="bi bi-pause-fill"></i>
+            </button>
+            {{ task_content | safe }}
+        </div>
+    </div>
+
+    <div class="pause-screen" id="pauseScreen">
+        <h2>Пауза</h2>
+        <p>Задание приостановлено</p>
+        <button class="resume-btn" id="resumeBtn">Продолжить</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('gameContent').classList.add('active');
+            document.querySelector('.instructions').style.display = 'none';
+        });
+
+        let isPlaying = true;
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const pauseScreen = document.getElementById('pauseScreen');
+        const gameContent = document.getElementById('gameContent');
+        const resumeBtn = document.getElementById('resumeBtn');
+
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playPauseBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                pauseScreen.classList.remove('active');
+                gameContent.style.opacity = '1';
+            } else {
+                playPauseBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                pauseScreen.classList.add('active');
+                gameContent.style.opacity = '0.3';
+            }
+        });
+
+        resumeBtn.addEventListener('click', () => {
+            isPlaying = true;
+            playPauseBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+            pauseScreen.classList.remove('active');
+            gameContent.style.opacity = '1';
+        });
+    </script>
+</body>
+
+</html>

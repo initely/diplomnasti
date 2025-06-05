@@ -1,331 +1,328 @@
-<!DOCTYPE html>
-<html lang="ru">
+<style>
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        background-image: url('/pages/testtask/assets/background.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: relative;
+        overflow: hidden;
+    }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Задание 1</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/pages/styles/common.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f8f5ff;
-        }
+    .character-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 0 20px;
+        gap: 200px;
+        width: 100%;
+    }
 
-        .game-container {
-            max-width: 1100px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            background-image: url('/pages/testtask/assets/background.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            position: relative;
-        }
+    .character {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
 
-        .game-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0);
-            /* Полупрозрачный белый фон */
-            border-radius: 20px;
-            z-index: 1;
-        }
+    .character img {
+        height: auto;
+        display: block;
+    }
 
-        .character-container {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin: 1px 0;
-            padding: 0 20px;
-            gap: 200px;
-            width: 100%;
-        }
+    #lexa img {
+        max-width: 350px;
+    }
 
-        .character {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    #businka img {
+        max-width: 300px;
+    }
 
-        .character img {
-            height: auto;
-        }
+    .answer-container {
+        max-width: 1600px;
+        width: 100%;
+        margin: 20px auto 0;
+        padding: 20px;
+        background-color: #f1ebff;
+        border-radius: 15px;
+    }
 
-        #lexa img {
-            max-width: 350px;
-        }
+    .form-control {
+        background-color: white !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 15px !important;
+    }
 
-        #businka img {
-            max-width: 300px;
-        }
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+    }
 
-        .answer-container {
-            max-width: 1600px;
-            width: 100%;
-            margin: 20px auto 0;
-            padding: 20px;
-            background-color: #f1ebff;
-            border-radius: 15px;
-        }
+    .dragging {
+        position: absolute;
+        pointer-events: none;
+        z-index: 1000;
+    }
 
-        .form-control {
-            background-color: white !important;
-            border: none !important;
-            border-radius: 15px !important;
-            padding: 10px 15px !important;
-        }
+    .pause-screen {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(75, 0, 130, 0.9);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+    }
 
-        .btn-primary {
-            background-color: #4b0082 !important;
-            border: none !important;
-            border-radius: 15px !important;
-            padding: 10px 30px !important;
-        }
+    .pause-screen.active {
+        display: flex;
+    }
 
-        .dragging {
-            position: absolute;
-            pointer-events: none;
-            z-index: 1000;
-        }
+    .pause-screen h2 {
+        font-size: 36px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 
-        .play-pause-btn {
-            background-color: #4b0082 !important;
-            border: none !important;
-            border-radius: 50% !important;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px auto;
-        }
+    .pause-screen p {
+        font-size: 24px;
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
 
-        .play-pause-btn i {
-            color: white;
-            font-size: 1.5rem;
-        }
+    .pause-screen .resume-btn {
+        background-color: white;
+        color: #4b0082;
+        border: none;
+        border-radius: 15px;
+        padding: 15px 40px;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
 
-        .speech-bubble {
-            position: relative;
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 300px;
-            flex-grow: 1;
-            text-align: center;
-        }
+    .pause-screen .resume-btn:hover {
+        transform: scale(1.1);
+        background-color: #f0f0f0;
+    }
 
-        .lexa-speech {
-            position: relative;
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 250px;
-            text-align: center;
-            margin-bottom: 10px;
-            border: 1px solid #e0e0e0;
-        }
+    .play-pause-btn {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 50% !important;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px auto;
+        transition: transform 0.3s;
+    }
 
-        .lexa-speech:after {
-            content: '';
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 20px solid white;
-            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
-        }
+    .play-pause-btn:hover {
+        transform: scale(1.1);
+    }
 
-        .lexa-speech:before {
-            content: '';
-            position: absolute;
-            bottom: -21px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 20px solid #e0e0e0;
-        }
+    .play-pause-btn i {
+        color: white;
+        font-size: 1.5rem;
+    }
 
-        .answer-input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-        }
+    .speech-bubble {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 300px;
+        flex-grow: 1;
+        text-align: center;
+    }
 
-        .answer-input-group .form-control {
-            width: 150px;
-        }
-    </style>
-</head>
+    .lexa-speech {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 250px;
+        text-align: center;
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+    }
 
-<body>
-    {% set page_title = "Задание 1" %}
-    {% include "components/page_header.html" %}
+    .lexa-speech:after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid white;
+        filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+    }
 
-    <div class="container mt-4">
-        <button class="play-pause-btn" id="playPauseBtn">
-            <i class="bi bi-play-fill"></i>
-        </button>
+    .lexa-speech:before {
+        content: '';
+        position: absolute;
+        bottom: -21px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid #e0e0e0;
+    }
 
-        <div class="game-container">
-            <div class="character-container">
-                <div class="character" id="lexa">
-                    <div class="lexa-speech">
-                        У меня было 3 яблока, но Кошечка-Бусинка подарила мне ещё 2 яблока, сколько у меня теперь яблок?
-                    </div>
-                    <img src="/pages/testtask/assets/lexa_3.png" alt="Леша" id="lexaImg" draggable="false">
-                </div>
-                <div class="character" id="businka">
-                    <img src="/pages/testtask/assets/businka_2.png" alt="Бусинка" id="businkaImg" draggable="false">
-                </div>
+    .answer-input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .answer-input-group .form-control {
+        width: 150px;
+    }
+</style>
+
+<div class="game-container">
+    <div class="character-container">
+        <div class="character" id="lexa">
+            <div class="lexa-speech">
+                У меня было 3 яблока, но Кошечка-Бусинка подарила мне ещё 2 яблока, сколько у меня теперь яблок?
             </div>
+            <img src="/pages/testtask/assets/lexa_3.png" alt="Леша" id="lexaImg" draggable="false">
         </div>
+        <div class="character" id="businka">
+            <img src="/pages/testtask/assets/businka_2.png" alt="Бусинка" id="businkaImg" draggable="false">
+        </div>
+    </div>
+</div>
 
-        <div class="answer-container">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="answer-input-group">
-                        <input type="number" class="form-control" id="answer" placeholder="Ответ">
-                        <button class="btn btn-primary" id="checkAnswer">Проверить</button>
-                    </div>
-                </div>
+<div class="answer-container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="answer-input-group">
+                <input type="number" class="form-control" id="answer" placeholder="Ответ">
+                <button class="btn btn-primary" id="checkAnswer">Проверить</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let isPlaying = true;
-        let businkaApples = 2;
-        let lexaApples = 3;
-        let isDragging = false;
-        let dragImage = null;
-        let dragSource = null;
+<script>
+    let businkaApples = 2;
+    let lexaApples = 3;
+    let isDragging = false;
+    let dragImage = null;
+    let dragSource = null;
 
-        // Play/Pause button functionality
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        playPauseBtn.addEventListener('click', () => {
-            isPlaying = !isPlaying;
-            playPauseBtn.innerHTML = isPlaying ?
-                '<i class="bi bi-pause-fill"></i>' :
-                '<i class="bi bi-play-fill"></i>';
-        });
-
-        // Drag and drop functionality
-        const businka = document.getElementById('businka');
-        const lexa = document.getElementById('lexa');
-
-        function updateLexaSpeech() {
-            const speechBubble = document.querySelector('.lexa-speech');
-            if (lexaApples === 5) {
-                speechBubble.textContent = 'Ура!';
-            } else if (lexaApples === 4) {
-                if (dragSource === 'lexa') {
-                    speechBubble.textContent = 'Эй, куда?';
-                } else {
-                    speechBubble.textContent = 'Оп, давай ещё!';
-                }
-            } else if (lexaApples === 3) {
-                if (dragSource === 'lexa') {
-                    speechBubble.textContent = 'Эй, куда?';
-                } else {
-                    speechBubble.textContent = 'У меня было 3 яблока, но Кошечка-Бусинка подарила мне ещё 2 яблока, сколько у меня теперь яблок?';
-                }
-            }
-        }
-
-        function startDrag(e, source) {
-            if (!isPlaying) return;
-
-            if (source === 'businka' && businkaApples <= 0) return;
-            if (source === 'lexa' && lexaApples <= 3) return;
-
-            e.preventDefault();
-            isDragging = true;
-            dragSource = source;
-
-            dragImage = document.createElement('img');
-            dragImage.src = '/pages/testtask/assets/apple.png';
-            dragImage.draggable = false;
-            dragImage.style.width = '50px';
-            dragImage.style.height = '50px';
-            dragImage.classList.add('dragging');
-            document.body.appendChild(dragImage);
-
-            updateDragImagePosition(e);
-
-            if (source === 'businka') {
-                businkaApples--;
-                document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+    function updateLexaSpeech() {
+        const speechBubble = document.querySelector('.lexa-speech');
+        if (lexaApples === 5) {
+            speechBubble.textContent = 'Ура!';
+        } else if (lexaApples === 4) {
+            if (dragSource === 'lexa') {
+                speechBubble.textContent = 'Эй, куда?';
             } else {
-                lexaApples--;
-                document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
-                updateLexaSpeech();
+                speechBubble.textContent = 'Оп, давай ещё!';
+            }
+        } else if (lexaApples === 3) {
+            if (dragSource === 'lexa') {
+                speechBubble.textContent = 'Эй, куда?';
+            } else {
+                speechBubble.textContent = 'У меня было 3 яблока, но Кошечка-Бусинка подарила мне ещё 2 яблока, сколько у меня теперь яблок?';
             }
         }
+    }
 
-        function updateDragImagePosition(e) {
-            if (!dragImage) return;
-            dragImage.style.left = (e.clientX - 25) + 'px';
-            dragImage.style.top = (e.clientY - 25) + 'px';
+    function startDrag(e, source) {
+        if (!isPlaying) return;
+
+        if (source === 'businka' && businkaApples <= 0) return;
+        if (source === 'lexa' && lexaApples <= 3) return;
+
+        e.preventDefault();
+        isDragging = true;
+        dragSource = source;
+
+        dragImage = document.createElement('img');
+        dragImage.src = '/pages/testtask/assets/apple.png';
+        dragImage.draggable = false;
+        dragImage.style.width = '80px';
+        dragImage.style.height = '80px';
+        dragImage.classList.add('dragging');
+        document.body.appendChild(dragImage);
+
+        updateDragImagePosition(e);
+
+        if (source === 'businka') {
+            businkaApples--;
+            document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+        } else {
+            lexaApples--;
+            document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+            updateLexaSpeech();
         }
+    }
 
-        function endDrag(e) {
-            if (!isDragging) return;
+    function updateDragImagePosition(e) {
+        if (!dragImage) return;
+        dragImage.style.left = (e.clientX - 25) + 'px';
+        dragImage.style.top = (e.clientY - 25) + 'px';
+    }
 
-            const target = e.target.closest('.character');
-            if (target) {
-                const targetId = target.id;
+    function endDrag(e) {
+        if (!isDragging) return;
 
-                if (dragSource === 'businka' && targetId === 'lexa') {
-                    if (lexaApples < 5) {
-                        lexaApples++;
-                        document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
-                        updateLexaSpeech();
-                    } else {
-                        businkaApples++;
-                        document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
-                    }
-                } else if (dragSource === 'lexa' && targetId === 'businka') {
-                    if (businkaApples < 2) {
-                        businkaApples++;
-                        document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
-                    } else {
-                        lexaApples++;
-                        document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
-                        updateLexaSpeech();
-                    }
+        const target = e.target.closest('.character');
+        if (target) {
+            const targetId = target.id;
+
+            if (dragSource === 'businka' && targetId === 'lexa') {
+                if (lexaApples < 5) {
+                    lexaApples++;
+                    document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+                    updateLexaSpeech();
                 } else {
-                    if (dragSource === 'businka') {
-                        businkaApples++;
-                        document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
-                    } else {
-                        lexaApples++;
-                        document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
-                        updateLexaSpeech();
-                    }
+                    businkaApples++;
+                    document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+                }
+            } else if (dragSource === 'lexa' && targetId === 'businka') {
+                if (businkaApples < 2) {
+                    businkaApples++;
+                    document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+                } else {
+                    lexaApples++;
+                    document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+                    updateLexaSpeech();
                 }
             } else {
                 if (dragSource === 'businka') {
@@ -337,35 +334,42 @@
                     updateLexaSpeech();
                 }
             }
-
-            isDragging = false;
-            dragSource = null;
-            if (dragImage) {
-                dragImage.remove();
-                dragImage = null;
+        } else {
+            if (dragSource === 'businka') {
+                businkaApples++;
+                document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+            } else {
+                lexaApples++;
+                document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+                updateLexaSpeech();
             }
         }
 
-        businka.addEventListener('mousedown', (e) => startDrag(e, 'businka'));
-        lexa.addEventListener('mousedown', (e) => startDrag(e, 'lexa'));
+        isDragging = false;
+        dragSource = null;
+        if (dragImage) {
+            dragImage.remove();
+            dragImage = null;
+        }
+    }
 
-        document.addEventListener('mousemove', updateDragImagePosition);
-        document.addEventListener('mouseup', endDrag);
+    const businka = document.getElementById('businka');
+    const lexa = document.getElementById('lexa');
 
-        // Answer checking
-        document.getElementById('checkAnswer').addEventListener('click', () => {
-            const userAnswer = parseInt(document.getElementById('answer').value);
-            const correctAnswer = 5; // 3 + 2 = 5
+    businka.addEventListener('mousedown', (e) => startDrag(e, 'businka'));
+    lexa.addEventListener('mousedown', (e) => startDrag(e, 'lexa'));
 
-            if (userAnswer === correctAnswer) {
-                alert('Правильно! Молодец!');
-            } else {
-                alert('Попробуй еще раз!');
-            }
-        });
-    </script>
+    document.addEventListener('mousemove', updateDragImagePosition);
+    document.addEventListener('mouseup', endDrag);
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    document.getElementById('checkAnswer').addEventListener('click', () => {
+        const userAnswer = parseInt(document.getElementById('answer').value);
+        const correctAnswer = 5; // 3 + 2 = 5
 
-</html>
+        if (userAnswer === correctAnswer) {
+            alert('Правильно! Молодец!');
+        } else {
+            alert('Попробуй еще раз!');
+        }
+    });
+</script>

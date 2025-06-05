@@ -14,6 +14,7 @@ from handlers.school_worker import router as school_worker_router
 from handlers.tasks import router as tasks_router
 from middleware.logging_middleware import LoggingMiddleware
 from utils.logger import log_request, log_response, log_error
+from middleware.error_handler import ErrorHandlerMiddleware
 
 from models.user import User, get_current_user, RedirectException
 from typing import Optional, Dict, Any
@@ -26,6 +27,7 @@ app = FastAPI()
 
 # Добавляем middleware для логирования
 app.add_middleware(LoggingMiddleware)
+app.add_middleware(ErrorHandlerMiddleware)
 
 app.include_router(auth.router)
 app.include_router(childrens_router)
