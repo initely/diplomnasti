@@ -1,15 +1,18 @@
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 import json
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, Body
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect, HTTPException, Depends, Body
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import asyncio
 import os
+from handlers.childrens import get_available_subjects
 from models.user import User, child_required
 from models.task import Task
 from models.result import Result
+from utils.logger import log_error, log_request, log_response
 
 router = APIRouter()
 
@@ -236,3 +239,57 @@ async def websocket_endpoint(websocket: WebSocket, task_id: int, current_user: U
     except WebSocketDisconnect:
         if session_id in active_sessions:
             del active_sessions[session_id] 
+
+
+templates = Jinja2Templates(directory="pages")
+
+@router.get("/testtask")
+def testtask(request: Request):
+    return templates.TemplateResponse(
+        "testtask/testtask.html", 
+        {
+            "request": request        }
+    )
+@router.get("/subjects/{subject}/{task_id}", response_class=HTMLResponse)
+async def subject_page(
+    request: Request,
+    subject: str,
+    task_id: int,
+    current_user: User = Depends(child_required)
+):
+    log_request(request, current_user)
+    try:
+        available_subjects = get_available_subjects(current_user)
+
+        if subject not in available_subjects:
+            log_error(Exception("Предмет не найден"), f"Subject: {subject}")
+            raise HTTPException(status_code=404, detail="Предмет не найден или недоступен для вас")
+
+        subject_name = available_subjects[subject]
+
+        task = await Task.get_or_none(id=task_id)
+        if not task:
+            log_error(Exception("Задание не найдено"), f"Task ID: {task_id}")
+            raise HTTPException(status_code=404, detail="Задание не найдено")
+
+
+        return templates.TemplateResponse(
+            "testtask/testtask.html", 
+            {
+                "request": request,
+                "subject": subject,
+                "subject_name": subject_name,
+                "current_user": current_user
+            }
+        )
+
+
+        log_response({
+            "message": "Открыта страница c заданием",
+            "subject": subject,
+            "subject_name": subject_name
+        })
+
+    except Exception as e:
+        log_error(e, "Ошибка при открытии страницы предмета")
+        raise

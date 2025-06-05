@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Игра с яблоками</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f0f8ff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .character {
+            position: relative;
+            width: 200px;
+        }
+
+        .character img {
+            max-width: 100%;
+        }
+
+        .bubble {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            padding: 10px;
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            font-size: 16px;
+        }
+
+        .basket {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .apple {
+            width: 40px;
+            height: 40px;
+            margin: 5px;
+            cursor: grab;
+        }
+
+        #answer-container {
+            display: none;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Перетащи яблоки из корзины Кошечки-Бусинки в корзину Лёши</h1>
+
+    <div class="game-container">
+        <div class="character" id="lesha">
+            <div class="bubble">У меня было 3 яблока, но Кошечка-Бусинка подарила мне ещё 2 яблока. Сколько у меня
+                теперь яблок?</div>
+            <img src="pages/testtask/lexa_3.png" id="lesha-img" alt="Лёша">
+            <div class="basket" id="lesha-basket"></div>
+        </div>
+
+        <div class="character" id="cat">
+            <img src="pages/testtask/businka_2.png" id="cat-img" alt="Кошечка-Бусинка">
+            <div class="basket" id="cat-basket">
+                <img src="pages/testtask/apple.png" class="apple" draggable="true" id="apple1">
+                <img src="pages/testtask/apple.png" class="apple" draggable="true" id="apple2">
+            </div>
+        </div>
+    </div>
+
+    <div id="answer-container">
+        <p>Сколько яблок у Лёши?</p>
+        <input type="number" id="answer" placeholder="Введите ответ">
+        <button onclick="checkAnswer()">Проверить</button>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        let appleCount = 0;
+
+        document.querySelectorAll('.apple').forEach(apple => {
+            apple.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('id', e.target.id);
+            });
+        });
+
+        const leshaBasket = document.getElementById('lesha-basket');
+
+        leshaBasket.addEventListener('dragover', e => e.preventDefault());
+
+        leshaBasket.addEventListener('drop', e => {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('id');
+            const apple = document.getElementById(id);
+            if (apple && apple.parentNode.id === "cat-basket") {
+                leshaBasket.appendChild(apple);
+                appleCount++;
+
+                updateImages();
+
+                if (appleCount === 2) {
+                    document.getElementById('answer-container').style.display = 'block';
+                }
+            }
+        });
+
+        function updateImages() {
+            const leshaImg = document.getElementById('lesha-img');
+            const catImg = document.getElementById('cat-img');
+            leshaImg.src = `lesha_${3 + appleCount}.png`;
+            catImg.src = `cat_${2 - appleCount}.png`;
+        }
+
+        function checkAnswer() {
+            const input = document.getElementById('answer').value;
+            const result = document.getElementById('result');
+            if (parseInt(input) === 5) {
+                result.textContent = "Молодец! Всё верно!";
+                result.style.color = "green";
+            } else {
+                result.textContent = "Почти! Попробуй ещё раз.";
+                result.style.color = "red";
+            }
+        }
+    </script>
+</body>
+
+</html>

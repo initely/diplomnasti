@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Игра: Яблоки для Лёши</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+      margin: 0;
+      padding: 20px;
+    }
+    .game-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 0 10px #ccc;
+      padding: 30px;
+      position: relative;
+    }
+    .task-cloud {
+      background: #e0f7fa;
+      border-radius: 30px;
+      padding: 15px 30px;
+      font-size: 20px;
+      position: absolute;
+      top: 10px;
+      left: 200px;
+      z-index: 2;
+    }
+    .characters-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 80px;
+      margin-bottom: 30px;
+    }
+    .character {
+      width: 180px;
+      text-align: center;
+      position: relative;
+    }
+    .basket {
+      width: 90px;
+      height: 70px;
+      background: #deb887;
+      border-radius: 0 0 50px 50px;
+      margin: 0 auto;
+      position: relative;
+      top: -30px;
+      border: 3px solid #a0522d;
+    }
+    .apple {
+      width: 40px;
+      height: 40px;
+      background: red;
+      border-radius: 50%;
+      border: 2px solid #a00;
+      position: absolute;
+      cursor: grab;
+      z-index: 3;
+    }
+    #instruction {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    #answer-section {
+      display: none;
+      text-align: center;
+      margin-top: 30px;
+    }
+    #answer-input {
+      font-size: 20px;
+      width: 60px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="task-cloud">
+      У меня было 3 яблока, но Кошечка-Бусинка подарила мне ещё 2 яблока, сколько у меня теперь яблок?
+    </div>
+    <div id="instruction">
+      Перетащи яблоки из корзины Кошечки-Бусинки в корзину Лёши
+    </div>
+    <div class="characters-row">
+      <!-- Лёша -->
+      <div class="character" id="lesha">
+        <!-- Заглушка для картинки Лёши -->
+        <img src="https://img.icons8.com/emoji/96/boy-emoji.png" alt="Лёша" width="90">
+        <div class="basket" id="lesha-basket"></div>
+      </div>
+      <!-- Кошечка-Бусинка -->
+      <div class="character" id="cat">
+        <!-- Заглушка для картинки кошечки -->
+        <img src="https://img.icons8.com/emoji/96/cat-face.png" alt="Кошечка-Бусинка" width="90">
+        <div class="basket" id="cat-basket"></div>
+      </div>
+    </div>
+    <div id="answer-section">
+      <label for="answer-input">Сколько у Лёши яблок?</label>
+      <input type="number" id="answer-input" min="0" max="10">
+      <button onclick="checkAnswer()">Ответить</button>
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    // Координаты яблок в корзине кошечки
+    const apples = [
+      {left: 10, top: 10},
+      {left: 40, top: 20},
+      {left: 20, top: 35},
+      {left: 60, top: 10},
+      {left: 50, top: 35}
+    ];
+
+    // 3 яблока у Лёши, 2 у кошечки
+    let leshaApples = 3;
+    let catApples = 2;
+
+    // Рисуем яблоки
+    function renderApples() {
+      const leshaBasket = document.getElementById('lesha-basket');
+      const catBasket = document.getElementById('cat-basket');
+      leshaBasket.innerHTML = '';
+      catBasket.innerHTML = '';
+
+      // Яблоки Лёши (фиксированные)
+      for (let i = 0; i < leshaApples; i++) {
+        const apple = document.createElement('div');
+        apple.className = 'apple';
+        apple.style.left = (10 + i*25) + 'px';
+        apple.style.top = (20 + (i%2)*15) + 'px';
+        leshaBasket.appendChild(apple);
+      }
+
+      // Яблоки кошечки (перетаскиваемые)
+      for (let i = 0; i < catApples; i++) {
+        const apple = document.createElement('div');
+        apple.className = 'apple';
+        apple.style.left = (10 + i*25) + 'px';
+        apple.style.top = (20 + (i%2)*15) + 'px';
+        apple.draggable = true;
+        apple.id = 'apple-' + i;
+        apple.addEventListener('dragstart', dragStart);
+        catBasket.appendChild(apple);
+      }
+    }
+
+    function dragStart(e) {
+      e.dataTransfer.setData('text/plain', e.target.id);
+    }
+
+    // Разрешаем сброс на корзину Лёши
+    const leshaBasket = document.getElementById('lesha-basket');
+    leshaBasket.addEventListener('dragover', function(e) {
+      e.preventDefault();
+    });
+    leshaBasket.addEventListener('drop', function(e) {
+      e.preventDefault();
+      const appleId = e.dataTransfer.getData('text/plain');
+      const apple = document.getElementById(appleId);
+      if (apple && catApples > 0) {
+        // Удаляем яблоко из корзины кошечки
+        apple.parentNode.removeChild(apple);
+        catApples--;
+        leshaApples++;
+        renderApples();
+        // Если все яблоки перенесены, показываем поле для ответа
+        if (catApples === 0) {
+          document.getElementById('answer-section').style.display = 'block';
+        }
+      }
+    });
+
+    function checkAnswer() {
+      const answer = document.getElementById('answer-input').value;
+      const result = document.getElementById('result');
+      if (answer == 5) {
+        result.textContent = "Молодец! Всё верно!";
+        result.style.color = "green";
+      } else {
+        result.textContent = "Попробуй ещё раз!";
+        result.style.color = "red";
+      }
+    }
+
+    renderApples();
+  </script>
+</body>
+</html>

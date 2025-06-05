@@ -77,7 +77,7 @@ async def subjects(
             "subjects_count": len(available_subjects)
         })
         return templates.TemplateResponse(
-            "subjects_page/index.html",
+            "children_pages/subjects_of_child.html",
             {
                 "request": request,
                 "current_user": current_user,
@@ -111,7 +111,7 @@ async def subject_page(
         })
         
         return templates.TemplateResponse(
-            "subjects_page/subject.html",
+            "children_pages/subject.html",
             {
                 "request": request,
                 "subject": subject,
