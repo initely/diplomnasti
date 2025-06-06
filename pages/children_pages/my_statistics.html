@@ -249,20 +249,8 @@
                                 <span class="header-text">№</span>
                             </th>
                             <th>
-                                <span class="sort-icon" data-sort="current_class"></span>
-                                <span class="header-text">Класс</span>
-                            </th>
-                            <th>
                                 <span class="sort-icon" data-sort="subject"></span>
                                 <span class="header-text">Предмет</span>
-                            </th>
-                            <th>
-                                <span class="sort-icon" data-sort="score"></span>
-                                <span class="header-text">Результат</span>
-                            </th>
-                            <th>
-                                <span class="sort-icon" data-sort="time_seconds"></span>
-                                <span class="header-text">Время выполнения</span>
                             </th>
                             <th>
                                 <span class="sort-icon" data-sort="description"></span>
@@ -311,20 +299,8 @@
                                 <span class="header-text">№</span>
                             </th>
                             <th>
-                                <span class="sort-icon" data-sort="current_class"></span>
-                                <span class="header-text">Класс</span>
-                            </th>
-                            <th>
                                 <span class="sort-icon" data-sort="subject"></span>
                                 <span class="header-text">Предмет</span>
-                            </th>
-                            <th>
-                                <span class="sort-icon" data-sort="score"></span>
-                                <span class="header-text">Результат</span>
-                            </th>
-                            <th>
-                                <span class="sort-icon" data-sort="time_seconds"></span>
-                                <span class="header-text">Время выполнения</span>
                             </th>
                             <th>
                                 <span class="sort-icon" data-sort="description"></span>
@@ -405,10 +381,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${(currentPage - 1) * rowsPerPage + index + 1}</td>
-                    <td>${stat.current_class}</td>
                     <td>${stat.subject}</td>
-                    <td>${stat.score} из ${stat.max_score}</td>
-                    <td>${stat.time_seconds ? stat.time_seconds.toFixed(1) + ' сек' : '-'}</td>
                     <td>${stat.description || '-'}</td>
                     <td>${getStatusBadge(stat.confirmed)}</td>
                 `;
