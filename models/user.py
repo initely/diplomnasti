@@ -32,7 +32,11 @@ class User(models.Model):
     
     # Для всех пользователей, кроме админа, можно привязать школу (необязательно)
     school = fields.ForeignKeyField(
-        "models.School", related_name="users", null=True, description="Школа, с которой связан пользователь"
+        "models.School", 
+        related_name="users", 
+        null=True,
+        on_delete=fields.SET_NULL,
+        description="Школа, с которой связан пользователь"
     )
     
     # Поля для Ребёнка:

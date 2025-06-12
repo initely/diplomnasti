@@ -241,7 +241,13 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h3>{{ child.full_name }}</h3>
-                    <p>Класс: {{ child.current_class }}</p>
+                    <div class="child-info">
+                        <h2 class="child-name">{{ child.full_name }}</h2>
+                        <div class="child-details">
+                            <span class="child-class">{{ child.current_class }} класс</span>
+                            <span class="child-school">{{ child.school_name }}</span>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <button onclick="window.location.href='/subjects'" class="btn btn-action">

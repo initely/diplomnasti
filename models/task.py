@@ -5,7 +5,6 @@ class Task(models.Model):
     description = fields.CharField(max_length=255) #Описание задания
     subjects_name = fields.CharField(max_length=255)
     local_id = fields.IntField()  # Локальный номер задания (1-5)
-    type = fields.CharField(max_length=50)
     max_score = fields.FloatField()
 
     class Meta:
@@ -16,4 +15,4 @@ class Task(models.Model):
         return await cls.filter(subjects_name=subjects_name, local_id=local_id).first()
 
     def __str__(self):
-        return f"{self.subjects_name} - {self.name}" 
+        return f"{self.subjects_name} - {self.description}" 

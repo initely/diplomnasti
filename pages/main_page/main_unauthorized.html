@@ -206,7 +206,7 @@
                 console.log('Response data:', data);
 
                 if (response.ok) {
-                    window.location.href = data.redirect || '/me';
+                    window.location.href = data.redirect || '/';
                 } else {
                     let errorMessage;
                     if (Array.isArray(data.detail)) {

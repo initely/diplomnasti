@@ -1,13 +1,22 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from models.user import User, get_current_user, parent_required, is_parent_of_child, get_children_for_parent
 from models.school import School
 from models.result import Result
 from utils.logger import log_request, log_response, log_error
+from datetime import datetime, timezone
+from handlers.childrens import get_subject_name
 
 router = APIRouter()
 templates = Jinja2Templates(directory="pages")
+
+def make_aware(dt):
+    if dt is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 @router.get("/children-profiles", response_class=HTMLResponse)
 async def children_profiles(
@@ -57,7 +66,7 @@ async def parent_statistics(
             "message": "Открыта страница статистики детей",
             "parent_id": current_user.id
         })
-
+        
         return templates.TemplateResponse(
             "parent_pages/child_statistics.html",
             {
@@ -143,63 +152,59 @@ async def get_child_info(
         log_error(e, "Ошибка при получении информации о ребенке")
         raise
 
-@router.get("/child_statistics", response_class=HTMLResponse)
-async def child_statistics_page(
-    request: Request,
-    current_user: User = Depends(parent_required)
-):
-    log_request(request, current_user)
-    try:
-        # Получаем список детей родителя
-        children_ids = current_user.get_children_list()
-        if not children_ids:
-            raise HTTPException(status_code=404, detail="У вас нет привязанных детей")
-
-        # Получаем первого ребенка (в будущем можно добавить выбор ребенка)
-        child = await User.get(id=children_ids[0])
-        if not child:
-            raise HTTPException(status_code=404, detail="Ребенок не найден")
-
-        log_response({
-            "message": "Открыта страница статистики ребенка",
-            "child_id": child.id
-        })
-
-        return templates.TemplateResponse(
-            "parent_pages/child_statistics.html",
-            {
-                "request": request,
-                "current_user": current_user,
-                "child": child
-            }
-        )
-    except Exception as e:
-        log_error(e, "Ошибка при открытии страницы статистики ребенка")
-        raise
-
 @router.get("/get_child_statistics")
 async def get_child_statistics(
     request: Request,
     offset: int = 0,
     limit: int = 10,
     search: str = "",
-    sort_field: str = "created_at",
+    sort_field: str = "started_at",
     sort_direction: str = "desc",
     current_user: User = Depends(parent_required)
 ):
     log_request(request, current_user)
     try:
+        log_response({
+            "message": "Начало обработки запроса статистики",
+            "params": {
+                "offset": offset,
+                "limit": limit,
+                "search": search,
+                "sort_field": sort_field,
+                "sort_direction": sort_direction
+            }
+        })
+
         # Получаем список детей родителя
         children_ids = current_user.get_children_list()
         if not children_ids:
-            raise HTTPException(status_code=404, detail="У вас нет привязанных детей")
+            log_error(Exception("Нет привязанных детей"), f"Parent ID: {current_user.id}")
+            return JSONResponse(
+                status_code=404,
+                content={"error": "У вас нет привязанных детей"}
+            )
+
+        log_response({
+            "message": "Получены ID детей",
+            "children_ids": children_ids
+        })
 
         # Получаем всех детей родителя
         children = await User.filter(id__in=children_ids)
         children_dict = {child.id: child for child in children}
 
+        log_response({
+            "message": "Получена информация о детях",
+            "children_count": len(children)
+        })
+
         # Получаем все результаты для всех детей родителя
         results = await Result.filter(user_id__in=children_ids).prefetch_related('task')
+        
+        log_response({
+            "message": "Получены результаты",
+            "results_count": len(results)
+        })
         
         # Фильтруем результаты по поисковому запросу
         if search:
@@ -208,60 +213,141 @@ async def get_child_statistics(
                 r for r in results if (
                     search in children_dict[r.user_id].full_name.lower() or
                     search in str(children_dict[r.user_id].current_class).lower() or
-                    search in r.task.subjects_name.lower()
+                    (r.task and search in r.task.subjects_name.lower())
                 )
             ]
+            log_response({
+                "message": "Отфильтрованы результаты",
+                "filtered_count": len(results)
+            })
         
         # Сортируем результаты
-        if sort_field == "created_at":
-            results.sort(key=lambda x: x.created_at, reverse=(sort_direction == "desc"))
-        elif sort_field == "score":
-            results.sort(key=lambda x: x.score, reverse=(sort_direction == "desc"))
-        elif sort_field == "time_seconds":
-            results.sort(key=lambda x: x.time_seconds or 0, reverse=(sort_direction == "desc"))
-        elif sort_field == "confirmed":
-            results.sort(key=lambda x: x.confirmed, reverse=(sort_direction == "desc"))
-        elif sort_field == "full_name":
-            results.sort(key=lambda x: children_dict[x.user_id].full_name, reverse=(sort_direction == "desc"))
-        elif sort_field == "current_class":
-            results.sort(key=lambda x: str(children_dict[x.user_id].current_class), reverse=(sort_direction == "desc"))
-        elif sort_field == "subject":
-            results.sort(key=lambda x: x.task.subjects_name, reverse=(sort_direction == "desc"))
-        elif sort_field == "description":
-            results.sort(key=lambda x: x.task.description or "", reverse=(sort_direction == "desc"))
+        try:
+            if sort_field == "started_at":
+                results.sort(key=lambda x: make_aware(x.started_at), reverse=(sort_direction == "desc"))
+            elif sort_field == "score":
+                results.sort(key=lambda x: x.score or 0, reverse=(sort_direction == "desc"))
+            elif sort_field == "time_seconds":
+                results.sort(key=lambda x: x.time_seconds or 0, reverse=(sort_direction == "desc"))
+            elif sort_field == "confirmed":
+                results.sort(key=lambda x: x.confirmed, reverse=(sort_direction == "desc"))
+            elif sort_field == "full_name":
+                results.sort(key=lambda x: children_dict[x.user_id].full_name, reverse=(sort_direction == "desc"))
+            elif sort_field == "current_class":
+                results.sort(key=lambda x: str(children_dict[x.user_id].current_class), reverse=(sort_direction == "desc"))
+            elif sort_field == "subject":
+                results.sort(key=lambda x: x.task.subjects_name if x.task else "", reverse=(sort_direction == "desc"))
+            elif sort_field == "description":
+                results.sort(key=lambda x: x.task.description if x.task else "", reverse=(sort_direction == "desc"))
+        except Exception as e:
+            log_error(e, f"Ошибка при сортировке результатов: {str(e)}")
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Ошибка при сортировке результатов: {str(e)}"}
+            )
+        
+        log_response({
+            "message": "Отсортированы результаты",
+            "sort_field": sort_field,
+            "sort_direction": sort_direction
+        })
         
         # Применяем пагинацию
         total = len(results)
         paginated_results = results[offset:offset + limit]
         
+        log_response({
+            "message": "Применена пагинация",
+            "total": total,
+            "offset": offset,
+            "limit": limit,
+            "paginated_count": len(paginated_results)
+        })
+        
         # Форматируем результаты для ответа
         statistics = []
         for result in paginated_results:
-            child = children_dict[result.user_id]
-            statistics.append({
-                "child_id": child.id,
-                "full_name": child.full_name,
-                "current_class": child.current_class,
-                "subject": result.task.subjects_name,
-                "score": result.score,
-                "max_score": result.task.max_score,
-                "time_seconds": result.time_seconds,
-                "description": result.task.description,
-                "confirmed": result.confirmed,
-                "created_at": result.created_at.isoformat()
-            })
+            try:
+                child = children_dict[result.user_id]
+                if not result.task:
+                    log_error(Exception("Задача не найдена"), f"result_id={result.id}")
+                    continue
+                    
+                stat = {
+                    "id": result.id,
+                    "child_id": child.id,
+                    "full_name": child.full_name,
+                    "current_class": child.current_class,
+                    "subject": get_subject_name(result.task.subjects_name),
+                    "score": result.score,
+                    "time_seconds": result.time_seconds,
+                    "description": result.task.description,
+                    "confirmed": result.confirmed
+                }
+                statistics.append(stat)
+                log_response({
+                    "message": "Добавлен результат в статистику",
+                    "result_id": result.id,
+                    "stat": stat
+                })
+            except Exception as e:
+                log_error(e, f"Ошибка при обработке результата result_id={result.id}")
+                continue
         
-        log_response({
-            "message": "Получена статистика детей",
-            "total": total,
-            "offset": offset,
-            "limit": limit
-        })
-        
-        return {
+        response_data = {
             "total": total,
             "statistics": statistics
         }
+        
+        log_response({
+            "message": "Подготовлен ответ",
+            "response_data": response_data
+        })
+        
+        return JSONResponse(content=response_data)
     except Exception as e:
         log_error(e, "Ошибка при получении статистики детей")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Ошибка при получении статистики: {str(e)}"}
+        )
+
+@router.get("/statistics/{result_id}", response_class=HTMLResponse)
+async def result_details(
+    request: Request,
+    result_id: int,
+    current_user: User = Depends(parent_required)
+):
+    log_request(request, current_user)
+    try:
+        # Получаем результат
+        result = await Result.filter(id=result_id).prefetch_related('task', 'user', 'confirmed_by').first()
+        if not result:
+            raise HTTPException(status_code=404, detail="Результат не найден")
+
+        # Проверяем, что результат принадлежит ребенку родителя
+        if not await is_parent_of_child(current_user.id, result.user_id):
+            raise HTTPException(status_code=403, detail="Доступ запрещен")
+
+        # Получаем информацию о ребенке
+        child = await User.get(id=result.user_id)
+        
+        log_response({
+            "message": "Открыта страница деталей результата",
+            "result_id": result_id,
+            "child_id": child.id
+        })
+        
+        return templates.TemplateResponse(
+            "parent_pages/result_details.html",
+            {
+                "request": request,
+                "result": result,
+                "child": child,
+                "current_user": current_user,
+                "get_subject_name": get_subject_name
+            }
+        )
+    except Exception as e:
+        log_error(e, "Ошибка при открытии страницы деталей результата")
         raise

@@ -12,6 +12,7 @@ from handlers.childrens import router as childrens_router
 from handlers.parents import router as parents_router
 from handlers.school_worker import router as school_worker_router
 from handlers.tasks import router as tasks_router
+from handlers.admin import router as admin_router
 from middleware.logging_middleware import LoggingMiddleware
 from utils.logger import log_request, log_response, log_error
 from middleware.error_handler import ErrorHandlerMiddleware
@@ -22,6 +23,7 @@ from typing import Optional, Dict, Any
 from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
 from tortoise.exceptions import DBConnectionError
+from models.school import School
 
 app = FastAPI()
 
@@ -34,6 +36,7 @@ app.include_router(childrens_router)
 app.include_router(parents_router)
 app.include_router(school_worker_router)
 app.include_router(tasks_router)
+app.include_router(admin_router)
 
 # Настройка статических файлов
 app.mount("/pages", StaticFiles(directory="pages"), name="pages")
@@ -98,7 +101,7 @@ try:
     register_tortoise(
         app,
         db_url='sqlite://db.sqlite3',
-        modules={'models': ['models.user', 'models.school', 'models.task', 'models.result']},
+        modules={'models': ['models.user', 'models.school', 'models.task', 'models.result', 'models.answer']},
         generate_schemas=True,
         add_exception_handlers=True,
     )
@@ -115,22 +118,15 @@ async def redirect_exception_handler(request: Request, exc: RedirectException):
 @app.get("/available_schools")
 async def get_available_schools(request: Request):
     log_request(request)
-    # Здесь можно подключить реальную базу данных
-    # Пока возвращаем тестовый список школ
-    schools = [
-        "Школа №1",
-        "Школа №2",
-        "Гимназия №1",
-        "Лицей №1",
-        "Школа №3 им. А.С. Пушкина",
-        "Гимназия №2",
-        "Школа №4 с углубленным изучением английского языка",
-        "Школа №5",
-        "Лицей №2",
-        "Школа №6"
-    ]
-    log_response({"schools_count": len(schools)})
-    return schools
+    try:
+        schools = await School.all()
+        return [{"id": school.id, "name": school.name} for school in schools]
+    except Exception as e:
+        log_error(e, "Ошибка при получении списка школ")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при получении списка школ"
+        )
 
 if __name__ == "__main__":
     import uvicorn

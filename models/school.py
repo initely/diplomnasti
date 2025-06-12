@@ -26,7 +26,7 @@ class School(models.Model):
         related_name="parents_in_school",
         description="Родители детей, обучающихся в школе",
         blank=True
-    )
+    )   
     
     class Meta:
         table = "school"

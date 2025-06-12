@@ -205,28 +205,42 @@
             try {
                 const response = await fetch('/get_childs');
                 const children = await response.json();
+                console.log('Полученные данные о детях:', children);
                 const container = document.getElementById('childrenList');
+                container.innerHTML = ''; // Очищаем контейнер перед добавлением новых элементов
 
-                children.forEach(child => {
+                for (const child of children) {
                     const panel = createChildPanel(child);
                     container.appendChild(panel);
-                });
+                    // Загружаем школы для каждой панели после её создания
+                    await loadSchools(panel);
+                }
             } catch (error) {
                 console.error('Ошибка при загрузке списка детей:', error);
             }
         }
 
         function createChildPanel(child) {
+            console.log('Создание панели для ребенка:', child);
             const panel = document.createElement('div');
             panel.className = 'child-panel non-edit-mode';
+            panel.dataset.childId = child.uid;
+
+            // Формируем полное имя
+            const fullName = `${child.surname} ${child.name} ${child.patronymic}`.trim();
+
             panel.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3>${child.surname} ${child.name} ${child.patronymic}</h3>
-                        <p>Класс: ${child.current_class}</p>
+                        <div class="child-info">
+                            <h3 class="child-name">${fullName || 'Не указано'}</h3>
+                            <p class="child-details">
+                                <span class="child-class">${child.current_class ? child.current_class + ' класс' : 'Класс не указан'}</span>
+                                <span class="child-school">${child.school_name || 'Школа не указана'}</span>
+                            </p>
+                        </div>
                     </div>
                     <div>
-                        
                         <button onclick="toggleEdit(this)" class="btn btn-action edit-btn">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -242,28 +256,34 @@
             return panel;
         }
 
-        async function loadChildDetails(uid) {
-            try {
-                const response = await fetch(`/get_child_info/${uid}`);
-                const details = await response.json();
-                return details;
-            } catch (error) {
-                console.error('Ошибка при загрузке информации о ребёнке:', error);
-                return null;
+        async function toggleDetails(childId, button) {
+            if (!childId || childId === 'undefined') {
+                console.error('Некорректный ID ребенка:', childId);
+                return;
             }
-        }
 
-        async function toggleDetails(uid, button) {
-            const detailsDiv = document.getElementById(`details-${uid}`);
+            const panel = button.closest('.child-panel');
+            const detailsDiv = document.getElementById(`details-${childId}`);
             const icon = button.querySelector('i');
 
             if (!detailsDiv.classList.contains('active')) {
-                const details = await loadChildDetails(uid);
-                if (details) {
-                    detailsDiv.innerHTML = createDetailsHTML(details);
+                try {
+                    const response = await fetch(`/get_child_info/${childId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const details = await response.json();
+                    if (details) {
+                        detailsDiv.innerHTML = createDetailsHTML(details);
+                        // Загружаем школы после создания деталей
+                        await loadSchools(panel);
+                    }
+                    detailsDiv.classList.add('active');
+                    icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+                } catch (error) {
+                    console.error('Ошибка при загрузке информации о ребенке:', error);
+                    alert('Ошибка при загрузке информации о ребенке');
                 }
-                detailsDiv.classList.add('active');
-                icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
             } else {
                 detailsDiv.classList.remove('active');
                 icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
@@ -294,10 +314,10 @@
                     <div class="col-md-6 mb-3">
                         <label>Школа</label>
                         <div class="readonly-field">${details.school || ''}</div>
-                        <input type="text" class="form-control edit-field" name="school" list="schoolsList" value="${details.school || ''}" readonly>
-                        <datalist id="schoolsList">
-                            <!-- Будет заполнено через JavaScript -->
-                        </datalist>
+                        <select class="form-select edit-field" name="school" required>
+                            <option value="">Выберите школу</option>
+                            <!-- Школы будут загружены через JavaScript -->
+                        </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label>Пол</label>
@@ -387,15 +407,15 @@
             });
         }
 
-        function confirmSaveChanges(button) {
-            if (confirm('Вы уверены, что хотите сохранить изменения?')) {
-                saveChanges(button);
-            }
-        }
-
         async function saveChanges(button) {
             const panel = button.closest('.child-panel');
-            const uid = panel.querySelector('.child-details').id.replace('details-', '');
+            const childId = panel.dataset.childId;
+
+            if (!childId) {
+                console.error('ID ребенка не найден');
+                alert('Ошибка: ID ребенка не найден');
+                return;
+            }
 
             const formData = {
                 school: panel.querySelector('[name="school"]').value,
@@ -410,8 +430,8 @@
             };
 
             try {
-                console.log(JSON.stringify(formData));
-                const response = await fetch(`/update_child/${uid}`, {
+                console.log('Отправка данных:', JSON.stringify(formData));
+                const response = await fetch(`/update_child/${childId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -421,13 +441,15 @@
 
                 if (response.ok) {
                     alert('Изменения сохранены успешно!');
-                    const details = await loadChildDetails(uid);
+                    const details = await loadChildDetails(childId);
                     if (details) {
-                        panel.querySelector('.child-details').innerHTML = createDetailsHTML(details);
+                        const detailsDiv = panel.querySelector('.child-details');
+                        detailsDiv.innerHTML = createDetailsHTML(details);
                     }
                     toggleEdit(panel.querySelector('.edit-btn'));
                 } else {
-                    alert('Ошибка при сохранении изменений');
+                    const errorData = await response.json();
+                    alert(`Ошибка при сохранении изменений: ${errorData.detail || 'Неизвестная ошибка'}`);
                 }
             } catch (error) {
                 console.error('Ошибка при сохранении:', error);
@@ -435,24 +457,67 @@
             }
         }
 
+        async function loadChildDetails(childId) {
+            try {
+                const response = await fetch(`/get_child_info/${childId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const details = await response.json();
+                return details;
+            } catch (error) {
+                console.error('Ошибка при загрузке информации о ребёнке:', error);
+                return null;
+            }
+        }
+
+        function confirmSaveChanges(button) {
+            if (confirm('Вы уверены, что хотите сохранить изменения?')) {
+                saveChanges(button);
+            }
+        }
+
         async function loadSchools(panel) {
+            if (!panel) {
+                console.error('Панель не найдена');
+                return;
+            }
+
             try {
                 const response = await fetch('/available_schools');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const schools = await response.json();
-                const datalist = panel.querySelector('#schoolsList');
-                datalist.innerHTML = '';
+                const schoolSelect = panel.querySelector('select[name="school"]');
 
+                if (!schoolSelect) {
+                    console.error('Элемент select[name="school"] не найден');
+                    return;
+                }
+
+                schoolSelect.innerHTML = '<option value="">Выберите школу</option>';
                 schools.forEach(school => {
                     const option = document.createElement('option');
-                    option.value = school;
-                    datalist.appendChild(option);
+                    option.value = school.id;
+                    option.textContent = school.name;
+                    schoolSelect.appendChild(option);
                 });
+
+                // Устанавливаем выбранную школу, если она есть
+                const currentSchoolId = panel.closest('.child-panel')?.querySelector('.child-school')?.dataset?.schoolId;
+                if (currentSchoolId) {
+                    schoolSelect.value = currentSchoolId;
+                }
             } catch (error) {
                 console.error('Ошибка при загрузке списка школ:', error);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', loadChildren);
+        // Загружаем детей при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChildren();
+        });
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

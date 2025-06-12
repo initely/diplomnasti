@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Детали результата</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/pages/styles/common.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .result-details-container {
+            background: var(--color-card);
+            border-radius: var(--radius-card);
+            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.10);
+            padding: 32px 24px;
+            margin-top: 40px;
+        }
+
+        .result-header {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+            min-height: 40px;
+        }
+
+        .result-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-text);
+            text-align: center;
+            margin: 0;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .result-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .info-card {
+            background: #f7f7ff;
+            border: 1px solid #a084ca;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .info-card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .info-card-value {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .stat-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .stat-badge.good {
+            background: #e3fcef;
+            color: #00a854;
+        }
+
+        .stat-badge.poor {
+            background: #fff1f0;
+            color: #f5222d;
+        }
+
+        .back-button {
+            position: absolute;
+            left: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #ede7fa;
+            border: 1px solid #a084ca;
+            border-radius: 8px;
+            color: #4b0082;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #d8c7f7;
+            color: #4b0082;
+        }
+
+        .confirm-button {
+            position: absolute;
+            right: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #4b0082;
+            border: 1px solid #4b0082;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .confirm-button:hover {
+            background: #6a3cb5;
+            color: white;
+        }
+
+        .confirm-button:disabled {
+            background: #a084ca;
+            border-color: #a084ca;
+            cursor: not-allowed;
+        }
+
+        .modal-content {
+            background: var(--color-card);
+            border: 1px solid #a084ca;
+            border-radius: var(--radius-card);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #a084ca;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #a084ca;
+        }
+
+        .btn-confirm {
+            background: #4b0082;
+            border-color: #4b0082;
+        }
+
+        .btn-confirm:hover {
+            background: #6a3cb5;
+            border-color: #6a3cb5;
+        }
+
+        .btn-cancel {
+            background: #ede7fa;
+            border-color: #a084ca;
+            color: #4b0082;
+        }
+
+        .btn-cancel:hover {
+            background: #d8c7f7;
+            border-color: #4b0082;
+        }
+    </style>
+</head>
+
+<body>
+    {% set page_title = "Детали результата" %}
+    {% include "components/page_header.html" %}
+
+    <div class="container">
+        <div class="result-details-container">
+            <div class="result-header">
+                <a href="/statistics" class="back-button">
+                    <i class="bi bi-arrow-left"></i>
+                    Назад к статистике
+                </a>
+                <h1 class="result-title">Детали результата</h1>
+                <div>
+                    {% if not result.confirmed %}
+                    <button class="confirm-button" data-bs-toggle="modal" data-bs-target="#confirmModal">
+                        <i class="bi bi-check-circle"></i>
+                        Подтвердить результат
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="result-info">
+                <div class="info-card">
+                    <div class="info-card-title">Ученик</div>
+                    <div class="info-card-value">{{ child.full_name }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-title">Класс</div>
+                    <div class="info-card-value">{{ child.current_class }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-title">Предмет</div>
+                    <div class="info-card-value">{{ get_subject_name(result.task.subjects_name) }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-title">Результат</div>
+                    <div class="info-card-value">{{ result.score }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-title">Время выполнения</div>
+                    <div class="info-card-value">
+                        {% if result.time_seconds %}
+                        {{ "%.1f"|format(result.time_seconds) }} сек
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-title">Статус</div>
+                    <div class="info-card-value">
+                        {% if result.confirmed %}
+                        <div class="d-flex flex-column gap-2">
+                            <span class="stat-badge good">Подтверждено</span>
+                            {% if result.confirmation_date %}
+                            <div class="text-muted" style="font-size: 14px;">
+                                {{ result.confirmation_date.strftime('%d.%m.%Y %H:%M') }}
+                                {% if result.confirmed_by %}
+                                <br>Пользователем: {{ result.confirmed_by.email }}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="stat-badge poor">Не подтверждено</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-title">Время начала</div>
+                    <div class="info-card-value">
+                        {% if result.started_at %}
+                        {{ result.started_at.strftime('%d.%m.%Y %H:%M') }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-title">Время окончания</div>
+                    <div class="info-card-value">
+                        {% if result.ended_at %}
+                        {{ result.ended_at.strftime('%d.%m.%Y %H:%M') }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if result.task.description %}
+            <div class="info-card">
+                <div class="info-card-title">Описание задания</div>
+                <div class="info-card-value">{{ result.task.description }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Подтверждение результата</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Вы уверены, что хотите подтвердить этот результат?</p>
+                    <p class="mb-0"><strong>Ученик:</strong> {{ child.full_name }}</p>
+                    <p class="mb-0"><strong>Предмет:</strong> {{ get_subject_name(result.task.subjects_name) }}</p>
+                    <p class="mb-0"><strong>Результат:</strong> {{ result.score }}</p>
+                    {% if result.time_seconds %}
+                    <p class="mb-0"><strong>Время:</strong> {{ "%.1f"|format(result.time_seconds) }} сек</p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-confirm" onclick="confirmResult()">Подтвердить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function confirmResult() {
+            try {
+                const response = await fetch(`/confirm_result/{{ result.id }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при подтверждении результата');
+                }
+
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+                modal.hide();
+
+                // Перезагружаем страницу для отображения обновленных данных
+                window.location.reload();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

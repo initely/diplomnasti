@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>База данных работников школ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/pages/styles/common.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .workers-table-container {
+            background: var(--color-card);
+            border-radius: var(--radius-card);
+            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.10);
+            padding: 32px 24px;
+            margin-top: 40px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pagination-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #ede7fa;
+            color: #4b0082;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 0;
+        }
+
+        .pagination-btn i {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .pagination-btn:hover {
+            background: #d8c7f7;
+        }
+
+        .pagination-btn:disabled {
+            background: #f3f0ff;
+            color: #a084ca;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .total-count {
+            color: #6c757d;
+            font-size: 14px;
+            margin-left: 20px;
+        }
+
+        .no-results {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .no-results i {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 8px 16px;
+            border: 1px solid #a084ca;
+            border-radius: 8px;
+            background: #f7f7ff;
+            color: var(--color-text);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4b0082;
+            box-shadow: 0 0 0 2px rgba(75, 0, 130, 0.1);
+        }
+
+        .clear-search-btn {
+            padding: 8px 16px;
+            background: #ede7fa;
+            border: 1px solid #a084ca;
+            border-radius: 8px;
+            color: #4b0082;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-search-btn:hover {
+            background: #d8c7f7;
+        }
+
+        .workers-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--color-text);
+        }
+
+        .workers-table th,
+        .workers-table td {
+            border: 1px solid #a084ca;
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        .workers-table th {
+            background: #ede7fa;
+            font-weight: 600;
+        }
+
+        .workers-table tr:nth-child(even) {
+            background: #f7f7ff;
+        }
+    </style>
+</head>
+
+<body>
+    {% set page_title = "База данных работников школ" %}
+    {% include "components/page_header.html" %}
+
+    <div class="container">
+        <div class="workers-table-container">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск по ФИО, почте или школе...">
+                <button id="clearSearch" class="clear-search-btn">Очистить</button>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center">
+                    <div>
+                        <label for="rowsPerPage" class="form-label me-2">Строк на странице:</label>
+                        <select id="rowsPerPage" class="form-select d-inline-block w-auto">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                    <span id="totalCount" class="total-count">Всего работников: 0</span>
+                </div>
+                <div class="pagination-controls">
+                    <button id="prevPage" class="pagination-btn" title="Назад"><i
+                            class="bi bi-chevron-left"></i></button>
+                    <span id="pageInfo" class="page-info"></span>
+                    <button id="nextPage" class="pagination-btn" title="Вперёд"><i
+                            class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+            <div id="tableContainer">
+                <table class="workers-table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>ФИО</th>
+                            <th>Школа</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workersTableBody">
+                        <!-- Данные будут подгружаться через JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentPage = 1;
+        let rowsPerPage = 10;
+        let totalRows = 0;
+        let totalAll = 0;
+        let searchQuery = '';
+
+        function showNoResults() {
+            const tableContainer = document.getElementById('tableContainer');
+            tableContainer.innerHTML = `
+                <div class="no-results">
+                    <i class="bi bi-emoji-frown"></i>
+                    <div>Ничего не найдено :с</div>
+                </div>
+            `;
+        }
+
+        function showTable() {
+            const tableContainer = document.getElementById('tableContainer');
+            tableContainer.innerHTML = `
+                <table class="workers-table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>ФИО</th>
+                            <th>Школа</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workersTableBody"></tbody>
+                </table>
+            `;
+        }
+
+        async function loadWorkers() {
+            const offset = (currentPage - 1) * rowsPerPage;
+            const response = await fetch(`/get_school_workers?offset=${offset}&limit=${rowsPerPage}&search=${encodeURIComponent(searchQuery)}`);
+            const data = await response.json();
+            totalRows = data.total;
+            totalAll = data.total_all;
+
+            if (data.workers.length === 0) {
+                showNoResults();
+            } else {
+                showTable();
+                updateTable(data.workers);
+            }
+            updatePageInfo();
+            updateTotalCount();
+        }
+
+        function updateTable(workers) {
+            const tbody = document.getElementById('workersTableBody');
+            tbody.innerHTML = '';
+            const startIdx = (currentPage - 1) * rowsPerPage;
+
+            workers.forEach((worker, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${startIdx + idx + 1}</td>
+                    <td>${worker.full_name || ''}</td>
+                    <td>${worker.school_name || ''}</td>
+                    <td>${worker.email || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updatePageInfo() {
+            const pageInfo = document.getElementById('pageInfo');
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            pageInfo.textContent = `Страница ${currentPage} из ${totalPages || 1}`;
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        }
+
+        function updateTotalCount() {
+            const totalCount = document.getElementById('totalCount');
+            if (searchQuery.trim() === '') {
+                totalCount.textContent = `Всего работников: ${totalAll}`;
+            } else {
+                totalCount.textContent = `Найдено работников: ${totalRows}`;
+            }
+        }
+
+        // Добавляем задержку для поиска
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuery = this.value;
+                currentPage = 1;
+                loadWorkers();
+            }, 300);
+        });
+
+        document.getElementById('clearSearch').addEventListener('click', function () {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            currentPage = 1;
+            loadWorkers();
+        });
+
+        document.getElementById('rowsPerPage').addEventListener('change', function () {
+            rowsPerPage = parseInt(this.value);
+            currentPage = 1;
+            loadWorkers();
+        });
+
+        document.getElementById('prevPage').addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                loadWorkers();
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', function () {
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadWorkers();
+            }
+        });
+
+        // Первая загрузка
+        loadWorkers();
+    </script>
+</body>
+
+</html>

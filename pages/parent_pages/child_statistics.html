@@ -206,6 +206,27 @@
             display: block;
             margin-top: 4px;
         }
+
+        .stat-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4b0082;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .stat-link:hover {
+            color: #6a3cb5;
+        }
+
+        .stat-link i {
+            font-size: 1.2em;
+        }
+
+        .stat-number {
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -292,7 +313,7 @@
         let rowsPerPage = 10;
         let totalRows = 0;
         let searchQuery = '';
-        let currentSort = { field: 'created_at', direction: 'desc' };
+        let currentSort = { field: 'started_at', direction: 'desc' };
         let allStatistics = [];
 
         function showNoResults() {
@@ -356,7 +377,7 @@
                 icon.addEventListener('click', function () {
                     const field = this.dataset.sort;
                     if (field === 'index') {
-                        currentSort = { field: 'created_at', direction: 'desc' };
+                        currentSort = { field: 'started_at', direction: 'desc' };
                     } else if (currentSort.field === field) {
                         currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
                     } else {
@@ -387,10 +408,56 @@
         async function loadStatistics() {
             const offset = (currentPage - 1) * rowsPerPage;
             try {
+                console.log('Отправка запроса статистики:', {
+                    offset,
+                    limit: rowsPerPage,
+                    search: searchQuery,
+                    sort_field: currentSort.field,
+                    sort_direction: currentSort.direction
+                });
+
                 const response = await fetch(`/get_child_statistics?offset=${offset}&limit=${rowsPerPage}&search=${encodeURIComponent(searchQuery)}&sort_field=${currentSort.field}&sort_direction=${currentSort.direction}`);
-                const data = await response.json();
-                totalRows = data.total;
+
+                console.log('Получен ответ:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+
+                const responseText = await response.text();
+                console.log('Текст ответа:', responseText);
+
+                if (!response.ok) {
+                    let errorMessage = 'Произошла ошибка при загрузке статистики';
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        console.error('Ошибка парсинга JSON ошибки:', e);
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    console.log('Распарсенные данные:', data);
+                } catch (parseError) {
+                    console.error('Ошибка парсинга JSON:', parseError);
+                    throw new Error('Ошибка при обработке ответа сервера');
+                }
+
+                if (!data || !Array.isArray(data.statistics)) {
+                    throw new Error('Неверный формат данных от сервера');
+                }
+
+                totalRows = data.total || 0;
                 allStatistics = data.statistics;
+
+                console.log('Обработанные данные:', {
+                    totalRows,
+                    statisticsCount: allStatistics.length
+                });
 
                 if (allStatistics.length === 0) {
                     showNoResults();
@@ -402,7 +469,17 @@
                 updateTotalCount();
             } catch (error) {
                 console.error('Ошибка при загрузке статистики:', error);
-                showNoResults();
+                const tableContainer = document.getElementById('tableContainer');
+                tableContainer.innerHTML = `
+                    <div class="no-results">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <div>${error.message}</div>
+                    </div>
+                `;
+                totalRows = 0;
+                allStatistics = [];
+                updatePageInfo();
+                updateTotalCount();
             }
         }
 
@@ -413,11 +490,16 @@
             statistics.forEach((stat, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${(currentPage - 1) * rowsPerPage + index + 1}</td>
+                    <td>
+                        <a href="/statistics/${stat.id}" class="stat-link" title="Подробная информация">
+                            <i class="bi bi-arrow-right-circle-fill"></i>
+                            <span class="stat-number">${(currentPage - 1) * rowsPerPage + index + 1}</span>
+                        </a>
+                    </td>
                     <td><a href="/child/${stat.child_id}" style="text-decoration: none;">${stat.full_name}</a></td>
                     <td>${stat.current_class}</td>
                     <td>${stat.subject}</td>
-                    <td>${stat.score} из ${stat.max_score}</td>
+                    <td>${stat.score}</td>
                     <td>${stat.time_seconds ? stat.time_seconds.toFixed(1) + ' сек' : '-'}</td>
                     <td>${stat.description || '-'}</td>
                     <td>${getStatusBadge(stat.confirmed)}</td>

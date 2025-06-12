@@ -300,15 +300,19 @@ async def create_parent(
                 detail="Пользователь с таким email уже существует"
             )
 
+        # Получаем школу
+        school = await School.get(id=current_user.school_id)
+
         new_parent = await User.create(
             email=parent_data.email,
             hashed_password=hash_password(parent_data.password),
             role="parent",
             full_name=parent_data.full_name,
-            school=current_user.school
+            school=school
         )
 
-        await current_user.school.parents.add(new_parent)
+        # Добавляем родителя в список родителей школы
+        await school.parents.add(new_parent)
         
         log_response({
             "message": "Родитель успешно добавлен",

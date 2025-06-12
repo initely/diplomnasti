@@ -29,10 +29,31 @@
             color: inherit;
         }
 
+        .task-card.completed {
+            background-color: #e8f5e9;
+            cursor: default;
+        }
+
+        .task-card.completed:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
         .task-title {
             color: #4b0082;
             font-weight: 600;
             margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .completed-badge {
+            background-color: #4caf50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 14px;
         }
 
         .container.mt-5 {
@@ -47,11 +68,18 @@
 
     <div class="container mt-5">
         <div class="row">
-            {% for i in range(1, 6) %}
+            {% for task in tasks %}
             <div class="col-12">
-                <a href="/subjects/{{ subject }}/{{ i }}" class="task-card">
-                    <h3 class="task-title">Задание {{ i }}</h3>
-                    <p>Здесь будет содержимое задания</p>
+                {% set is_completed = task.id in completed_tasks %}
+                <a href="{% if not is_completed %}/subjects/{{ subject }}/{{ task.local_id }}{% else %}#{% endif %}"
+                    class="task-card {% if is_completed %}completed{% endif %}">
+                    <h3 class="task-title">
+                        Задание {{ task.local_id }}
+                        {% if is_completed %}
+                        <span class="completed-badge">Выполнено</span>
+                        {% endif %}
+                    </h3>
+                    <p>{{ task.description }}</p>
                 </a>
             </div>
             {% endfor %}

@@ -10,7 +10,8 @@ class Result(models.Model):
     confirmed = fields.BooleanField(default=False, description="Подтверждение (для физры)")
     confirmed_by = fields.ForeignKeyField("models.User", related_name="confirmed_results", null=True, description="Кто подтвердил")
     confirmation_date = fields.DatetimeField(null=True, description="Дата подтверждения")
-    created_at = fields.DatetimeField(auto_now_add=True)
+    started_at = fields.DatetimeField(auto_now_add=True, description="Время начала задания")
+    ended_at = fields.DatetimeField(null=True, description="Время окончания задания")
 
     class Meta:
         table = "results"

@@ -362,14 +362,43 @@
     document.addEventListener('mousemove', updateDragImagePosition);
     document.addEventListener('mouseup', endDrag);
 
-    document.getElementById('checkAnswer').addEventListener('click', () => {
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
         const userAnswer = parseInt(document.getElementById('answer').value);
-        const correctAnswer = 5; // 3 + 2 = 5
 
-        if (userAnswer === correctAnswer) {
-            alert('Правильно! Молодец!');
-        } else {
-            alert('Попробуй еще раз!');
+        try {
+            console.log('Отправка ответа:', userAnswer);
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: userAnswer
+                })
+            });
+
+            const data = await response.json();
+            console.log('Получен ответ:', data);
+
+            if (data.is_correct) {
+                console.log('Ответ верный, пытаемся сделать редирект');
+                alert('Правильно! Молодец!');
+                try {
+                    console.log('Вызываем redirectToSubject');
+                    window.redirectToSubject();
+                } catch (e) {
+                    console.error('Ошибка при редиректе:', e);
+                    // Fallback редирект
+                    console.log('Используем fallback редирект');
+                    window.location.href = '/subjects/mathematics';
+                }
+            } else {
+                console.log('Ответ неверный');
+                alert(data.message || 'Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
         }
     });
 </script>

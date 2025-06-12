@@ -391,9 +391,12 @@
             const offset = (currentPage - 1) * rowsPerPage;
             try {
                 const response = await fetch(`/get_school_statistics?offset=${offset}&limit=${rowsPerPage}&search=${encodeURIComponent(searchQuery)}&sort_field=${currentSort.field}&sort_direction=${currentSort.direction}`);
+
                 const data = await response.json();
+                console.log('Полученные данные:', data);
                 totalRows = data.total;
                 allStatistics = data.statistics;
+                console.log('Статистика:', allStatistics);
 
                 if (allStatistics.length === 0) {
                     showNoResults();
@@ -420,9 +423,9 @@
                     <td><a href="/child/${stat.child_id}" style="text-decoration: none;">${stat.full_name}</a></td>
                     <td>${stat.current_class}</td>
                     <td>${stat.subject}</td>
-                    <td>${stat.score} из ${stat.max_score}</td>
+                    <td>${stat.score}</td>
                     <td>${stat.time_seconds ? stat.time_seconds.toFixed(1) + ' сек' : '-'}</td>
-                    <td>${stat.details || '-'}</td>
+                    <td>${stat.description || '-'}</td>
                     <td>${getStatusBadge(stat.confirmed)}</td>
                 `;
                 tbody.appendChild(row);

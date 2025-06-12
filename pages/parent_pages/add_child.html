@@ -96,21 +96,15 @@
                 </select>
             </div>
             <div class="mb-3">
-                <select class="form-select" required>
-                    <option value="" disabled selected>Класс</option>
-                    <script>
-                        for (let i = 1; i <= 11; i++) {
-                            document.write(`<option value="${i}">${i}</option>`);
-                        }
-                    </script>
-                </select>
+                <input type="text" class="form-control" name="current_class" placeholder="Класс" required
+                    pattern="[1-9][0-9]?[А-Яа-я]"
+                    oninput="this.value = this.value.replace(/[^1-9А-Яа-я]/g, '').toUpperCase()">
             </div>
             <div class="mb-3">
-                <input type="text" class="form-control" id="schoolInput" list="schoolsList" placeholder="Школа"
-                    required>
-                <datalist id="schoolsList">
-                    <!-- Будет заполнено через JavaScript -->
-                </datalist>
+                <select class="form-select" name="school" required>
+                    <option value="" disabled selected>Выберите школу</option>
+                    <!-- Школы будут загружены через JavaScript -->
+                </select>
             </div>
             <div class="mb-3">
                 <select class="form-select" required>
@@ -176,11 +170,12 @@
         fetch('/available_schools')
             .then(response => response.json())
             .then(schools => {
-                const datalist = document.getElementById('schoolsList');
+                const schoolSelect = document.querySelector('select[name="school"]');
                 schools.forEach(school => {
                     const option = document.createElement('option');
-                    option.value = school;
-                    datalist.appendChild(option);
+                    option.value = school.id;
+                    option.textContent = school.name;
+                    schoolSelect.appendChild(option);
                 });
             });
 
@@ -214,7 +209,7 @@
                 if (response.ok) {
                     const result = await response.json();
                     alert('Ребёнок успешно добавлен!');
-                    window.location.href = '/me';
+                    window.location.href = '/';
                 } else {
                     const error = await response.json();
                     alert(error.detail || 'Произошла ошибка при добавлении ребёнка');
