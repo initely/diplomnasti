@@ -6,13 +6,15 @@ from models.user import User, get_current_user, child_required, is_parent_of_chi
 from utils.logger import log_request, log_response, log_error
 from models.result import Result
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import re
 
 router = APIRouter()
 templates = Jinja2Templates(directory="pages")
 
 logger = logging.getLogger(__name__)
+
+LOCAL_TIMEZONE = timezone(timedelta(hours=4))  # UTC+4
 
 def log_request(request: Request, user: User):
     logger.info(f"Request: {request.method} {request.url.path} from user {user.id}")
@@ -269,9 +271,9 @@ async def my_statistics(
 
 def make_aware(dt):
     if dt is None:
-        return datetime.min.replace(tzinfo=timezone.utc)
+        return datetime.min.replace(tzinfo=LOCAL_TIMEZONE)
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=LOCAL_TIMEZONE)
     return dt
 
 @router.get("/get_my_statistics")

@@ -138,6 +138,8 @@ def school_worker_required(current_user: Dict[str, Any] = Depends(get_current_us
     return current_user
 
 def parent_or_school_worker_required(current_user: Dict[str, Any] = Depends(get_current_user)):
+    print(f'ПРОВЕРКА: {current_user.role} {current_user.role in ["parent", "psychologist"] }')
+    
     if current_user.role not in ["parent", "psychologist"]:
         raise HTTPException(
             status_code=403, 
@@ -163,23 +165,25 @@ async def get_children_for_parent(parent_id: int) -> list:
         'school_id',
         'gender',
         'physical_group',
-        'languages'
+        'languages',
+        'email'
     )
     
     # Преобразуем данные в нужный формат
     formatted_children = []
     for child in children:
-        names = child['full_name'].split() if child['full_name'] else ['', '', '']
+        school =  await School.get(id=child['school_id'])
+        
         formatted_children.append({
             'uid': child['id'],
-            'surname': names[0] if len(names) > 0 else '',
-            'name': names[1] if len(names) > 1 else '',
-            'patronymic': names[2] if len(names) > 2 else '',
+            "full_name": child['full_name'],
             'current_class': child['current_class'],
             'school_id': child['school_id'],
+            'school_name': school.name,
             'gender': child['gender'],
             'physical_group': child['physical_group'],
-            'languages': json.loads(child['languages']) if child['languages'] else []
+            'languages': json.loads(child['languages']) if child['languages'] else [],
+            'email': child['email']
         })
     
     return formatted_children
@@ -190,16 +194,12 @@ async def update_child_details(child_uid: str, child_data: dict) -> bool:
         print(child_data)
         # Обновляем основные поля
         
-        schoolname=child_data["school"].strip()
 
-        if 'school' in child_data:
             
-            school = await School.filter(name=schoolname).first()
+        school = await School.get(id=int(child_data["school_id"]))
 
-            if not school:
-                school = await School.create(name=schoolname)
             
-            child.school = school
+        child.school = school
             
         if 'gender' in child_data:
             child.gender = child_data['gender']

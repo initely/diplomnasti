@@ -101,7 +101,14 @@ try:
     register_tortoise(
         app,
         db_url='sqlite://db.sqlite3',
-        modules={'models': ['models.user', 'models.school', 'models.task', 'models.result', 'models.answer']},
+        modules={'models':[
+            'models.user',
+            'models.school', 
+            'models.task', 
+            'models.result', 
+            'models.answer',
+            'models.rest_break_time'
+            ]},
         generate_schemas=True,
         add_exception_handlers=True,
     )
@@ -133,3 +140,10 @@ if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
 
 
+@app.get("/test")
+def test(request: Request):
+    return templates.TemplateResponse(
+            "tasks/nature/task2/task2.html",
+            {
+                "request": request,
+            })

@@ -172,7 +172,7 @@
     <div class="container">
         <div class="result-details-container">
             <div class="result-header">
-                <a href="/statistics" class="back-button">
+                <a href="{% if current_user.role == 'psychologist' %}/children_statistics{% else %}/statistics{% endif %}" class="back-button">
                     <i class="bi bi-arrow-left"></i>
                     Назад к статистике
                 </a>

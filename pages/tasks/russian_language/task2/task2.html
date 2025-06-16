@@ -1,0 +1,229 @@
+<style>
+    .game-title {
+        width: 100%;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        margin-top: 10px;
+    }
+
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        background-image: url('/pages/testtask/assets/background.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        gap: 80px;
+        width: 100%;
+    }
+
+    .character {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    #rustam img {
+        max-width: 370px;
+        height: auto;
+        display: block;
+    }
+
+    .character .speech-bubble {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 180px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .character .speech-bubble:after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid white;
+    }
+
+    .cards-grid-outer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        width: 440px;
+        height: 100%;
+    }
+
+    .cards-grid-container {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        width: 100%;
+        align-items: center;
+    }
+
+    .cards-row {
+        display: flex;
+        flex-direction: row;
+        gap: 40px;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .card {
+        background-color: white;
+        border: 2px solid #4b0082;
+        border-radius: 18px;
+        padding: 28px 28px 14px 28px;
+        font-size: 28px;
+        cursor: pointer;
+        transition: box-shadow 0.2s, background 0.2s, border 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+        min-width: 170px;
+        min-height: 170px;
+        text-align: center;
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        position: relative;
+    }
+
+    .card.selected {
+        background: #f1ebff;
+        border: 2px solid #ff9800;
+        box-shadow: 0 0 16px #ff9800;
+    }
+
+    .card-emoji {
+        font-size: 96px;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .answer-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        position: static;
+    }
+
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+        color: white;
+        font-size: 18px;
+    }
+</style>
+
+<div class="game-title">
+    Рустам изучал названия фруктов, но перепутал карточки.
+</div>
+<div class="game-container">
+    <div class="character-container">
+        <div class="character" id="rustam">
+            <div class="speech-bubble">
+                Помоги найти лишнюю!
+            </div>
+            <img src="/pages/tasks/mathematics/task1/assets/lexa_3.png" alt="Рустам" draggable="false">
+        </div>
+        <div class="cards-grid-outer">
+            <div class="cards-grid-container" id="cardsContainer">
+                <div class="cards-row">
+                    <div class="card" data-value="яблоко"><span class="card-emoji">🍏</span>яблоко</div>
+                    <div class="card" data-value="машина"><span class="card-emoji">🚗</span>машина</div>
+                </div>
+                <div class="cards-row">
+                    <div class="card" data-value="банан"><span class="card-emoji">🍌</span>банан</div>
+                    <div class="card" data-value="груша"><span class="card-emoji">🍐</span>груша</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="answer-container">
+    <button class="btn btn-primary" id="checkAnswer">Проверить</button>
+</div>
+
+<script>
+    const correct = 'машина';
+    let selectedCard = null;
+
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', function () {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedCard = card.getAttribute('data-value');
+        });
+    });
+
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
+        if (!selectedCard) {
+            alert('Пожалуйста, выберите одну из карточек!');
+            return;
+        }
+        try {
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: selectedCard
+                })
+            });
+            const data = await response.json();
+            if (data.is_correct) {
+                alert('Правильно! Молодец!');
+                try {
+                    window.redirectToSubject();
+                } catch (e) {
+                    window.location.href = '/subjects/russian_language';
+                }
+            } else {
+                alert('Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
+        }
+    });
+</script>

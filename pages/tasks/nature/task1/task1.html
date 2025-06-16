@@ -1,0 +1,282 @@
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .game-title {
+        width: 100%;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        margin-top: 10px;
+    }
+
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        gap: 80px;
+        width: 100%;
+    }
+
+    .character {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    #nature-character img {
+        max-width: 270px;
+        height: auto;
+        display: block;
+    }
+
+    .character .speech-bubble {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 220px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .character .speech-bubble:after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid white;
+    }
+
+    .slider-controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        gap: 20px;
+        z-index: 3;
+        align-items: center;
+    }
+
+    .slider-btn {
+        background: rgba(255, 255, 255, 0.8);
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: background 0.3s;
+    }
+
+    .slider-btn:hover {
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .season-select {
+        padding: 8px 15px;
+        border: 2px solid #4b0082;
+        border-radius: 10px;
+        font-size: 16px;
+        background-color: rgba(255, 255, 255, 0.9);
+        min-width: 150px;
+    }
+
+    .answer-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        position: static;
+    }
+
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+        color: white;
+        font-size: 18px;
+    }
+
+    .background-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.5s ease;
+        z-index: 1;
+    }
+</style>
+
+<div class="game-title">
+    К какому времени года относятся картинки?
+</div>
+<div class="game-container">
+    <img src="/pages/tasks/nature/task1/assets/spring.jpg" alt="Фон" class="background-image" id="backgroundImage">
+    <div class="character-container">
+        <div class="character" id="nature-character">
+            <div class="speech-bubble">
+                Посмотри на картинку и выбери, к какому времени года она относится
+            </div>
+            <img src="/pages/tasks/nature/task1/assets/character.png" alt="Персонаж" draggable="false">
+        </div>
+    </div>
+    <div class="slider-controls">
+        <button class="slider-btn" id="prevBtn">←</button>
+        <select class="season-select" id="seasonSelect">
+            <option value="">Выберите время года</option>
+            <option value="Зима">Зима</option>
+            <option value="Осень">Осень</option>
+            <option value="Весна">Весна</option>
+            <option value="Лето">Лето</option>
+        </select>
+        <button class="slider-btn" id="nextBtn">→</button>
+    </div>
+</div>
+<div class="answer-container">
+    <button class="btn btn-primary" id="checkAnswer">Проверить</button>
+</div>
+
+<script>
+    const images = [
+        '/pages/tasks/nature/task1/assets/winter.jpg',
+        '/pages/tasks/nature/task1/assets/autumn.jpg',
+        '/pages/tasks/nature/task1/assets/spring.jpg',
+        '/pages/tasks/nature/task1/assets/summer.jpg'
+    ];
+
+    let currentImageIndex = 0;
+    let answers = {};
+
+    // Функция для перемешивания массива
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // Создаем и перемешиваем опции для выпадающего списка
+    function createShuffledOptions() {
+        const seasons = [
+            { value: 'Зима', text: 'Зима' },
+            { value: 'Осень', text: 'Осень' },
+            { value: 'Весна', text: 'Весна' },
+            { value: 'Лето', text: 'Лето' }
+        ];
+
+        const shuffledSeasons = shuffleArray([...seasons]);
+        const select = document.getElementById('seasonSelect');
+
+        // Очищаем текущие опции
+        select.innerHTML = '<option value="">Выберите время года</option>';
+
+        // Добавляем перемешанные опции
+        shuffledSeasons.forEach(season => {
+            const option = document.createElement('option');
+            option.value = season.value;
+            option.textContent = season.text;
+            select.appendChild(option);
+        });
+    }
+
+    function updateImage() {
+        document.getElementById('backgroundImage').src = images[currentImageIndex];
+        // Сбрасываем выбранное значение при смене картинки
+        document.getElementById('seasonSelect').value = answers[currentImageIndex] || '';
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        updateImage();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        updateImage();
+    });
+
+    document.getElementById('seasonSelect').addEventListener('change', function () {
+        answers[currentImageIndex] = this.value;
+    });
+
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
+        // Проверяем, что все картинки имеют ответы
+        const allAnswered = images.every((_, index) => answers[index]);
+
+        if (!allAnswered) {
+            alert('Пожалуйста, выберите время года для всех картинок!');
+            return;
+        }
+
+        try {
+            // Преобразуем объект ответов в строку
+            const answerString = Object.values(answers).join(',');
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: answerString
+                })
+            });
+            const data = await response.json();
+            if (data.is_correct) {
+                alert('Правильно! Молодец!');
+                try {
+                    window.redirectToSubject();
+                } catch (e) {
+                    window.location.href = '/subjects/nature';
+                }
+            } else {
+                alert('Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
+        }
+    });
+
+    // Инициализация
+    createShuffledOptions();
+    updateImage();
+</script>

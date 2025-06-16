@@ -1,0 +1,188 @@
+<style>
+    .game-title {
+        width: 100%;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        margin-top: 10px;
+    }
+
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        background-image: url('/pages/testtask/assets/background.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        gap: 80px;
+        width: 100%;
+    }
+
+    .character {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    #businka img {
+        max-width: 270px;
+        height: auto;
+        display: block;
+    }
+
+    .character .speech-bubble {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 180px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .character .speech-bubble:after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid white;
+    }
+
+    .sentence-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        width: 60%;
+        height: 100%;
+        padding-right: 60px;
+    }
+
+    .sentence {
+        font-size: 32px;
+        background: #f1ebff;
+        border-radius: 15px;
+        padding: 30px 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+        min-width: 400px;
+        text-align: center;
+    }
+
+    .sentence input {
+        font-size: 28px;
+        border: 2px solid #4b0082;
+        border-radius: 10px;
+        padding: 5px 20px;
+        width: 160px;
+        text-align: center;
+        margin: 0 10px;
+    }
+
+    .answer-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        position: static;
+    }
+
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+        color: white;
+        font-size: 18px;
+    }
+</style>
+
+<div class="game-title">
+    Бусинка забыла слово, которым хотела описать действие солнца.
+</div>
+<div class="game-container">
+    <div class="character-container">
+        <div class="character" id="businka">
+            <div class="speech-bubble">
+                Что же обычно делает солнце?
+                Помоги мне подобрать слово!
+            </div>
+            <img src="/pages/testtask/assets/businka_0.png" alt="Бусинка" draggable="false">
+        </div>
+        <div class="sentence-container">
+            <div class="sentence">
+                На улице <input type="text" id="answerInput" maxlength="12" autocomplete="off"
+                    placeholder="..."></input> солнце
+            </div>
+        </div>
+    </div>
+</div>
+<div class="answer-container">
+    <button class="btn btn-primary" id="checkAnswer">Проверить</button>
+</div>
+
+<script>
+    const correct = 'светит';
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
+        const answer = document.getElementById('answerInput').value.trim().toLowerCase();
+        if (!answer) {
+            alert('Пожалуйста, введите слово!');
+            return;
+        }
+        try {
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: answer
+                })
+            });
+            const data = await response.json();
+            if (data.is_correct) {
+                alert('Правильно! Молодец!');
+                try {
+                    window.redirectToSubject();
+                } catch (e) {
+                    window.location.href = '/subjects/russian_language';
+                }
+            } else {
+                alert('Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
+        }
+    });
+</script>

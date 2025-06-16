@@ -259,7 +259,7 @@
                     <td>${parent.full_name || ''}</td>
                     <td>
                         ${parent.children && parent.children.length > 0 ? parent.children.map(child =>
-                    `<a href="/child_profile/${child.id}" class="link-primary">${child.full_name} (${child.current_class || ''})</a>`
+                    `<a href="/child/${child.id}" class="link-primary">${child.full_name} (${child.current_class || ''})</a>`
                 ).join('<br> ') : '<span class="text-muted">Нет зарегистрированных детей</span>'}
                     </td>
                 `;

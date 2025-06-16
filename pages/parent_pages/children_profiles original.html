@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профили детей</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="/pages/styles/common.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f5ff;
+        }
+
+        .help-icon {
+            cursor: pointer;
+            margin-right: 10px;
+            color: #4b0082;
+            font-size: 1.8rem;
+            float: right;
+            margin-bottom: 20px;
+        }
+
+        .tooltip-content {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 600px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            font-size: 1.35rem;
+            line-height: 1.4;
+            top: 100%;
+            margin-top: 10px;
+            right: 0;
+        }
+
+        .tooltip-content.show {
+            display: block;
+        }
+
+        .tooltip-content ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .child-panel {
+            background-color: #f1ebff;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #f1ebff !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 15px !important;
+        }
+
+        .btn-action {
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin-left: 5px;
+        }
+
+        .child-details {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 15px;
+        }
+
+        .child-details.active {
+            display: block;
+        }
+
+        .edit-mode .form-control,
+        .edit-mode .form-select {
+            background-color: white !important;
+        }
+
+        .edit-mode .readonly-field {
+            display: none;
+        }
+
+        .non-edit-mode .edit-field {
+            display: none;
+        }
+
+        .btn-primary {
+            background-color: #4b0082 !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 30px !important;
+        }
+
+        .child-details label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .child-details .readonly-field {
+            background-color: #f1ebff;
+            border-radius: 15px;
+            padding: 10px 15px;
+        }
+
+        .save-changes-btn {
+            display: none;
+        }
+
+        .edit-mode .save-changes-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .form-control,
+        .form-select,
+        .readonly-field,
+        .edit-field {
+            background-color: #f1ebff !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 10px 15px !important;
+            width: 100%;
+        }
+
+        .form-control:disabled,
+        .form-select:disabled,
+        .form-control[readonly],
+        .form-select[readonly] {
+            background-color: #f1ebff !important;
+            opacity: 1;
+        }
+
+        .form-control:hover,
+        .form-select:hover,
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #f1ebff !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    {% set page_title = "Профили детей" %}
+    {% include "components/page_header.html" %}
+
+    <div style="position: relative; margin-bottom: 20px;">
+        <div style="position: absolute; top: 0; right: 15px; z-index: 1;">
+            <i class="fas fa-question-circle help-icon" id="helpIcon"></i>
+            <div class="tooltip-content" id="tooltip">
+                <strong>Инструкция по редактированию профиля ребенка</strong>
+                <ol>
+                    <li>На вкладке «Профили детей» нажмите на знак выпадающего списка, потом на значок карандаша, для
+                        редактирования.</li>
+                    <li>Измените имеющуюся информацию на нужную.</li>
+                    <li>Нажмите на копку «Сохранить».</li>
+                    <li>Подтвердите сохранение изменений.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="childrenList">
+        <!-- Здесь будут отображаться панели детей -->
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/add-child">
+            <img src="icons/add_user.svg" alt="Добавить ребенка" style="width: 60px; height: 60px;">
+        </a>
+    </div>
+
+    <script>
+        // Добавляем обработчики для всплывающей подсказки
+        const helpIcon = document.getElementById('helpIcon');
+        const tooltip = document.getElementById('tooltip');
+
+        function showTooltip() {
+            tooltip.classList.add('show');
+        }
+
+        function hideTooltip() {
+            tooltip.classList.remove('show');
+        }
+
+        helpIcon.addEventListener('mouseenter', showTooltip);
+        helpIcon.addEventListener('mouseleave', hideTooltip);
+
+        async function loadChildren() {
+            try {
+                const response = await fetch('/get_childs');
+                const children = await response.json();
+                console.log('Полученные данные о детях:', children);
+                const container = document.getElementById('childrenList');
+                container.innerHTML = '';
+
+                // Сначала загрузим все школы
+                const schoolsResponse = await fetch('/available_schools');
+                const schools = await schoolsResponse.json();
+                console.log('Загруженные школы:', schools);
+                const schoolsMap = new Map(schools.map(school => [school.id, school.name]));
+
+                for (const child of children) {
+                    console.log('Обработка ребенка:', child);
+                    // Добавляем название школы к данным ребенка
+                    const schoolName = schoolsMap.get(parseInt(child.school_id));
+                    console.log('ID школы:', child.school_id, 'Название школы:', schoolName);
+                    child.school_name = schoolName || 'Школа не указана';
+                    const panel = createChildPanel(child);
+                    container.appendChild(panel);
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке списка детей:', error);
+            }
+        }
+
+        function createChildPanel(child) {
+            console.log('Создание панели для ребенка:', child);
+            const panel = document.createElement('div');
+            panel.className = 'child-panel non-edit-mode';
+            panel.dataset.childId = child.uid;
+            panel.dataset.schoolId = child.school_id;
+
+            // Формируем полное имя
+            const fullName = `${child.surname} ${child.name} ${child.patronymic}`.trim();
+
+            panel.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="child-info">
+                            <h3 class="child-name">${fullName || 'Не указано'}</h3>
+                            <p class="child-details">
+                                <span class="child-class">${child.current_class ? child.current_class + ' класс' : 'Класс не указан'}</span>
+                                <span class="child-school">${child.school_name || 'Школа не указана'}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <button onclick="toggleEdit(this)" class="btn btn-action edit-btn">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button onclick="toggleDetails('${child.uid}', this)" class="btn btn-action">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="child-details" id="details-${child.uid}">
+                    <!-- Здесь будет подробная информация -->
+                </div>
+            `;
+            return panel;
+        }
+
+        async function toggleDetails(childId, button) {
+            if (!childId || childId === 'undefined') {
+                console.error('Некорректный ID ребенка:', childId);
+                return;
+            }
+
+            const panel = button.closest('.child-panel');
+            const detailsDiv = document.getElementById(`details-${childId}`);
+            const icon = button.querySelector('i');
+
+            if (!detailsDiv.classList.contains('active')) {
+                try {
+                    const response = await fetch(`/get_child_info/${childId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const details = await response.json();
+                    console.log('Полученные детали ребенка:', details);
+
+                    if (details) {
+                        // Загружаем школы для получения названия
+                        const schoolsResponse = await fetch('/available_schools');
+                        const schools = await schoolsResponse.json();
+                        const schoolsMap = new Map(schools.map(school => [school.id, school.name]));
+
+                        // Добавляем название школы к деталям
+                        details.school = schoolsMap.get(parseInt(details.school_id)) || 'Школа не указана';
+
+                        detailsDiv.innerHTML = createDetailsHTML(details);
+                        // Загружаем школы после создания деталей
+                        await loadSchools(panel);
+                    }
+                    detailsDiv.classList.add('active');
+                    icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+                } catch (error) {
+                    console.error('Ошибка при загрузке информации о ребенке:', error);
+                    alert('Ошибка при загрузке информации о ребенке');
+                }
+            } else {
+                detailsDiv.classList.remove('active');
+                icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+            }
+        }
+
+        function toggleEdit(button) {
+            const panel = button.closest('.child-panel');
+            const icon = button.querySelector('i');
+
+            if (panel.classList.contains('non-edit-mode')) {
+                panel.classList.remove('non-edit-mode');
+                panel.classList.add('edit-mode');
+                icon.classList.replace('bi-pencil', 'bi-x');
+                makeFieldsEditable(panel, true);
+                loadSchools(panel);
+            } else {
+                panel.classList.remove('edit-mode');
+                panel.classList.add('non-edit-mode');
+                icon.classList.replace('bi-x', 'bi-pencil');
+                makeFieldsEditable(panel, false);
+            }
+        }
+
+        function createDetailsHTML(details) {
+            return `
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Школа</label>
+                        <div class="readonly-field">${details.school || ''}</div>
+                        <select class="form-select edit-field" name="school" required>
+                            <option value="">Выберите школу</option>
+                            <!-- Школы будут загружены через JavaScript -->
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Пол</label>
+                        <div class="readonly-field">${details.gender === 'male' ? 'Мужской' : 'Женский'}</div>
+                        <select class="form-select edit-field" name="gender">
+                            <option value="male" ${details.gender === 'male' ? 'selected' : ''}>Мужской</option>
+                            <option value="female" ${details.gender === 'female' ? 'selected' : ''}>Женский</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Класс</label>
+                        <div class="readonly-field">${details.current_class || ''}</div>
+                        <input type="text" 
+                            class="form-control edit-field" 
+                            name="current_class" 
+                            pattern="[1-9][0-9]?[А-Яа-я]" 
+                            placeholder="Например: 5А" 
+                            value="${details.current_class || ''}"
+                            oninput="this.value = this.value.replace(/[^1-9А-Яа-я]/g, '').toUpperCase()"
+                            required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Физкультурная группа</label>
+                        <div class="readonly-field">${getPhysicalGroupName(details.physical_group)}</div>
+                        <select class="form-select edit-field" name="physical_group">
+                            <option value="main" ${details.physical_group === 'main' ? 'selected' : ''}>Основная</option>
+                            <option value="preparatory" ${details.physical_group === 'preparatory' ? 'selected' : ''}>Подготовительная</option>
+                            <option value="special" ${details.physical_group === 'special' ? 'selected' : ''}>Специальная</option>
+                            <option value="exempt" ${details.physical_group === 'exempt' ? 'selected' : ''}>Освобожден</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>1-й Иностранный язык</label>
+                        <div class="readonly-field">${getLanguageName(details.languages[0])}</div>
+                        <select class="form-select edit-field" name="first_language">
+                            <option value="english" ${details.languages[0] === 'english' ? 'selected' : ''}>Английский</option>
+                            <option value="german" ${details.languages[0] === 'german' ? 'selected' : ''}>Немецкий</option>
+                            <option value="french" ${details.languages[0] === 'french' ? 'selected' : ''}>Французский</option>
+                            <option value="spanish" ${details.languages[0] === 'spanish' ? 'selected' : ''}>Испанский</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>2-й Иностранный язык</label>
+                        <div class="readonly-field">${getLanguageName(details.languages[1])}</div>
+                        <select class="form-select edit-field" name="second_language">
+                            <option value="none" ${!details.languages[1] ? 'selected' : ''}>Не изучает</option>
+                            <option value="english" ${details.languages[1] === 'english' ? 'selected' : ''}>Английский</option>
+                            <option value="german" ${details.languages[1] === 'german' ? 'selected' : ''}>Немецкий</option>
+                            <option value="french" ${details.languages[1] === 'french' ? 'selected' : ''}>Французский</option>
+                            <option value="spanish" ${details.languages[1] === 'spanish' ? 'selected' : ''}>Испанский</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Email</label>
+                        <div class="readonly-field">${details.email || ''}</div>
+                        <input type="email" class="form-control edit-field" name="email" value="${details.email || ''}" readonly>
+                    </div>
+                </div>
+                <div class="save-changes-btn">
+                    <button onclick="confirmSaveChanges(this)" class="btn btn-primary">Сохранить изменения</button>
+                </div>
+            `;
+        }
+
+        function getPhysicalGroupName(group) {
+            const groups = {
+                'main': 'Основная',
+                'preparatory': 'Подготовительная',
+                'special': 'Специальная',
+                'exempt': 'Освобожден'
+            };
+            return groups[group] || '';
+        }
+
+        function getLanguageName(lang) {
+            const languages = {
+                'english': 'Английский',
+                'german': 'Немецкий',
+                'french': 'Французский',
+                'spanish': 'Испанский',
+                'none': 'Не изучает'
+            };
+            return languages[lang] || 'Не изучает';
+        }
+
+        function makeFieldsEditable(panel, editable) {
+            const inputs = panel.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                input.readOnly = !editable;
+            });
+        }
+
+        async function saveChanges(button) {
+            const panel = button.closest('.child-panel');
+            const childId = panel.dataset.childId;
+
+            if (!childId) {
+                console.error('ID ребенка не найден');
+                alert('Ошибка: ID ребенка не найден');
+                return;
+            }
+
+            const formData = {
+                school: panel.querySelector('[name="school"]').value,
+                gender: panel.querySelector('[name="gender"]').value,
+                current_class: panel.querySelector('[name="current_class"]').value,
+                physical_group: panel.querySelector('[name="physical_group"]').value,
+                languages: [
+                    panel.querySelector('[name="first_language"]').value,
+                    panel.querySelector('[name="second_language"]').value === 'none' ? null : panel.querySelector('[name="second_language"]').value
+                ].filter(Boolean),
+                email: panel.querySelector('[name="email"]').value
+            };
+
+            try {
+                console.log('Отправка данных:', JSON.stringify(formData));
+                const response = await fetch(`/update_child/${childId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('Изменения сохранены успешно!');
+                    const details = await loadChildDetails(childId);
+                    if (details) {
+                        const detailsDiv = panel.querySelector('.child-details');
+                        detailsDiv.innerHTML = createDetailsHTML(details);
+                    }
+                    toggleEdit(panel.querySelector('.edit-btn'));
+                } else {
+                    const errorData = await response.json();
+                    alert(`Ошибка при сохранении изменений: ${errorData.detail || 'Неизвестная ошибка'}`);
+                }
+            } catch (error) {
+                console.error('Ошибка при сохранении:', error);
+                alert('Ошибка при сохранении изменений');
+            }
+        }
+
+        async function loadChildDetails(childId) {
+            try {
+                const response = await fetch(`/get_child_info/${childId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const details = await response.json();
+                return details;
+            } catch (error) {
+                console.error('Ошибка при загрузке информации о ребёнке:', error);
+                return null;
+            }
+        }
+
+        function confirmSaveChanges(button) {
+            if (confirm('Вы уверены, что хотите сохранить изменения?')) {
+                saveChanges(button);
+            }
+        }
+
+        async function loadSchools(panel) {
+            if (!panel) {
+                console.error('Панель не найдена');
+                return;
+            }
+
+            try {
+                const response = await fetch('/available_schools');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const schools = await response.json();
+                const schoolSelect = panel.querySelector('select[name="school"]');
+
+                if (!schoolSelect) {
+                    console.error('Элемент select[name="school"] не найден');
+                    return;
+                }
+
+                schoolSelect.innerHTML = '<option value="">Выберите школу</option>';
+                schools.forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school.id;
+                    option.textContent = school.name;
+                    schoolSelect.appendChild(option);
+                });
+
+                // Устанавливаем выбранную школу
+                const currentSchoolId = panel.dataset.schoolId;
+                if (currentSchoolId) {
+                    schoolSelect.value = currentSchoolId;
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке списка школ:', error);
+            }
+        }
+
+        // Загружаем детей при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChildren();
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

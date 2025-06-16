@@ -206,6 +206,27 @@
             display: block;
             margin-top: 4px;
         }
+
+        .stat-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4b0082;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .stat-link:hover {
+            color: #6a3cb5;
+        }
+
+        .stat-link i {
+            font-size: 1.2em;
+        }
+
+        .stat-number {
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -419,7 +440,12 @@
             statistics.forEach((stat, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${(currentPage - 1) * rowsPerPage + index + 1}</td>
+                    <td>
+                        <a href="/statistics/${stat.id}" class="stat-link" title="Подробная информация">
+                            <i class="bi bi-arrow-right-circle-fill"></i>
+                            <span class="stat-number">${(currentPage - 1) * rowsPerPage + index + 1}</span>
+                        </a>
+                    </td>
                     <td><a href="/child/${stat.child_id}" style="text-decoration: none;">${stat.full_name}</a></td>
                     <td>${stat.current_class}</td>
                     <td>${stat.subject}</td>

@@ -126,6 +126,88 @@
             color: white;
             font-size: 1.5rem;
         }
+
+        .break-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(75, 0, 130, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .break-screen.active {
+            display: flex;
+        }
+
+        .break-screen h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .break-screen p {
+            font-size: 24px;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .break-screen .timer {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .break-info-screen {
+            display: none;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .break-info-screen.active {
+            display: block;
+        }
+
+        .break-info-screen h2 {
+            color: #4b0082;
+            margin-bottom: 20px;
+        }
+
+        .break-info-screen .access-time {
+            font-size: 24px;
+            color: #666;
+            margin: 20px 0;
+        }
+
+        .break-info-screen .back-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        .break-info-screen .back-btn:hover {
+            background-color: #6a0dad;
+        }
     </style>
 </head>
 
@@ -143,6 +225,13 @@
                 <li>После ввода ответа, нажмите на кнопку «Проверить».</li>
             </ol>
             <button class="start-btn" id="startBtn">Начать задание</button>
+        </div>
+
+        <div class="break-info-screen" id="breakInfoScreen">
+            <h2>Время перерыва</h2>
+            <p>Сейчас у вас перерыв. Это время для отдыха и восстановления сил.</p>
+            <div class="access-time" id="accessTime"></div>
+            <a href="/subjects/{{ subject }}" class="back-btn">Вернуться к предметам</a>
         </div>
 
         <div class="instructions" id="completedMessage" style="display: none;">
@@ -166,11 +255,21 @@
         <button class="resume-btn" id="resumeBtn">Продолжить</button>
     </div>
 
+    <div class="break-screen" id="breakScreen">
+        <h2>Перерыв</h2>
+        <p>Время для отдыха!</p>
+        <div class="timer" id="breakTimer">15:00</div>
+        <p>Доступ к заданиям будет открыт после перерыва</p>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let isPlaying = true;
+        let breakTimer = null;
         const playPauseBtn = document.getElementById('playPauseBtn');
         const pauseScreen = document.getElementById('pauseScreen');
+        const breakScreen = document.getElementById('breakScreen');
+        const breakTimerElement = document.getElementById('breakTimer');
         const gameContent = document.getElementById('gameContent');
         const resumeBtn = document.getElementById('resumeBtn');
         const startBtn = document.getElementById('startBtn');
@@ -211,6 +310,94 @@
         // Проверяем статус задания при загрузке страницы
         checkTaskStatus();
 
+        // Проверяем время доступа к заданиям
+        async function checkBreakTime() {
+            try {
+                const response = await fetch(`/check_break_time/${taskId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                if (!data.can_access) {
+                    // Если сейчас перерыв, показываем информацию о времени доступа
+                    document.getElementById('instructions').style.display = 'none';
+                    document.getElementById('breakInfoScreen').classList.add('active');
+
+                    // Форматируем время доступа
+                    const accessTime = new Date(data.access_time);
+                    const formattedTime = accessTime.toLocaleTimeString('ru-RU', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    document.getElementById('accessTime').textContent =
+                        `Вы сможете продолжить выполнение заданий в ${formattedTime}`;
+                } else {
+                    // Если перерыва нет, проверяем активную сессию
+                    checkActiveSession();
+                }
+            } catch (error) {
+                console.error('Ошибка при проверке времени перерыва:', error);
+            }
+        }
+
+        // Проверяем наличие активной сессии
+        async function checkActiveSession() {
+            try {
+                const response = await fetch(`/check_active_session/${taskId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.has_active_session) {
+                    // Если есть активная сессия, сразу показываем игру
+                    document.getElementById('gameContent').classList.add('active');
+                    document.querySelector('.instructions').style.display = 'none';
+
+                    // Подключаемся к WebSocket
+                    const ws = new WebSocket(`ws://${window.location.host}/ws/task/${taskId}`);
+                    setupWebSocketHandlers(ws);
+                }
+            } catch (error) {
+                console.error('Ошибка при проверке активной сессии:', error);
+            }
+        }
+
+        // Проверяем время перерыва при загрузке страницы
+        checkBreakTime();
+
+        // Функция для настройки обработчиков WebSocket
+        function setupWebSocketHandlers(ws) {
+            ws.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'break') {
+                    isPlaying = false;
+                    playPauseBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                    breakScreen.classList.add('active');
+                    gameContent.style.opacity = '0.3';
+                    startBreakTimer(data.break_duration);
+                } else if (data.type === 'time_update') {
+                    if (data.is_break) {
+                        isPlaying = false;
+                        playPauseBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                        breakScreen.classList.add('active');
+                        gameContent.style.opacity = '0.3';
+                        startBreakTimer(data.break_duration);
+                    }
+                }
+            };
+
+            ws.onclose = function () {
+                console.log('WebSocket соединение закрыто');
+            };
+        }
+
         async function startTask() {
             try {
                 const response = await fetch(`/start_task/${taskId}`, {
@@ -223,6 +410,36 @@
                 if (response.ok) {
                     document.getElementById('gameContent').classList.add('active');
                     document.querySelector('.instructions').style.display = 'none';
+
+                    // Подключаемся к WebSocket только после успешного начала задания
+                    const ws = new WebSocket(`ws://${window.location.host}/ws/task/${taskId}`);
+
+                    ws.onmessage = function (event) {
+                        const data = JSON.parse(event.data);
+
+                        if (data.type === 'break') {
+                            // Если пришло сообщение о перерыве
+                            isPlaying = false;
+                            playPauseBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                            breakScreen.classList.add('active');
+                            gameContent.style.opacity = '0.3';
+                            startBreakTimer(data.break_duration);
+                        } else if (data.type === 'time_update') {
+                            // Обновление информации о времени
+                            if (data.is_break) {
+                                // Если наступил перерыв
+                                isPlaying = false;
+                                playPauseBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                                breakScreen.classList.add('active');
+                                gameContent.style.opacity = '0.3';
+                                startBreakTimer(data.break_duration);
+                            }
+                        }
+                    };
+
+                    ws.onclose = function () {
+                        console.log('WebSocket соединение закрыто');
+                    };
                 } else {
                     const data = await response.json();
                     if (data.detail === "Задание уже выполнено") {
@@ -276,6 +493,40 @@
             } catch (error) {
                 console.error('Ошибка:', error);
             }
+        }
+
+        function startBreakTimer(duration) {
+            if (!duration || isNaN(duration)) {
+                console.error('Invalid break duration:', duration);
+                duration = 900; // 15 минут по умолчанию
+            }
+
+            let timeLeft = Math.floor(duration);
+            breakTimerElement.textContent = formatTime(timeLeft);
+
+            if (breakTimer) {
+                clearInterval(breakTimer);
+            }
+
+            breakTimer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(breakTimer);
+                    breakScreen.classList.remove('active');
+                    gameContent.style.opacity = '1';
+                    return;
+                }
+                breakTimerElement.textContent = formatTime(timeLeft);
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) {
+                return "00:00";
+            }
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
         }
 
         startBtn.addEventListener('click', startTask);

@@ -8,7 +8,7 @@
         background-color: white;
         border-radius: 20px;
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        background-image: url('/pages/testtask/assets/background.png');
+        background-image: url('/pages/tasks/mathematics/task1/assets/background.png');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -218,10 +218,11 @@
             <div class="lexa-speech">
                 У меня было 3 яблока, но Кошечка-Бусинка подарила мне ещё 2 яблока, сколько у меня теперь яблок?
             </div>
-            <img src="/pages/testtask/assets/lexa_3.png" alt="Леша" id="lexaImg" draggable="false">
+            <img src="/pages/tasks/mathematics/task1/assets/lexa_3.png" alt="Леша" id="lexaImg" draggable="false">
         </div>
         <div class="character" id="businka">
-            <img src="/pages/testtask/assets/businka_2.png" alt="Бусинка" id="businkaImg" draggable="false">
+            <img src="/pages/tasks/mathematics/task1/assets/businka_2.png" alt="Бусинка" id="businkaImg"
+                draggable="false">
         </div>
     </div>
 </div>
@@ -230,7 +231,7 @@
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="answer-input-group">
-                <input type="number" class="form-control" id="answer" placeholder="Ответ">
+                <input type="number" class="form-control" id="answer" placeholder="Ответ" min="0" max="99">
                 <button class="btn btn-primary" id="checkAnswer">Проверить</button>
             </div>
         </div>
@@ -274,7 +275,7 @@
         dragSource = source;
 
         dragImage = document.createElement('img');
-        dragImage.src = '/pages/testtask/assets/apple.png';
+        dragImage.src = '/pages/tasks/mathematics/task1/assets/apple.png';
         dragImage.draggable = false;
         dragImage.style.width = '80px';
         dragImage.style.height = '80px';
@@ -285,10 +286,10 @@
 
         if (source === 'businka') {
             businkaApples--;
-            document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+            document.getElementById('businkaImg').src = `/pages/tasks/mathematics/task1/assets/businka_${businkaApples}.png`;
         } else {
             lexaApples--;
-            document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+            document.getElementById('lexaImg').src = `/pages/tasks/mathematics/task1/assets/lexa_${lexaApples}.png`;
             updateLexaSpeech();
         }
     }
@@ -309,38 +310,38 @@
             if (dragSource === 'businka' && targetId === 'lexa') {
                 if (lexaApples < 5) {
                     lexaApples++;
-                    document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+                    document.getElementById('lexaImg').src = `/pages/tasks/mathematics/task1/assets/lexa_${lexaApples}.png`;
                     updateLexaSpeech();
                 } else {
                     businkaApples++;
-                    document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+                    document.getElementById('businkaImg').src = `/pages/tasks/mathematics/task1/assets/businka_${businkaApples}.png`;
                 }
             } else if (dragSource === 'lexa' && targetId === 'businka') {
                 if (businkaApples < 2) {
                     businkaApples++;
-                    document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+                    document.getElementById('businkaImg').src = `/pages/tasks/mathematics/task1/assets/businka_${businkaApples}.png`;
                 } else {
                     lexaApples++;
-                    document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+                    document.getElementById('lexaImg').src = `/pages/tasks/mathematics/task1/assets/lexa_${lexaApples}.png`;
                     updateLexaSpeech();
                 }
             } else {
                 if (dragSource === 'businka') {
                     businkaApples++;
-                    document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+                    document.getElementById('businkaImg').src = `/pages/tasks/mathematics/task1/assets/businka_${businkaApples}.png`;
                 } else {
                     lexaApples++;
-                    document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+                    document.getElementById('lexaImg').src = `/pages/tasks/mathematics/task1/assets/lexa_${lexaApples}.png`;
                     updateLexaSpeech();
                 }
             }
         } else {
             if (dragSource === 'businka') {
                 businkaApples++;
-                document.getElementById('businkaImg').src = `/pages/testtask/assets/businka_${businkaApples}.png`;
+                document.getElementById('businkaImg').src = `/pages/tasks/mathematics/task1/assets/businka_${businkaApples}.png`;
             } else {
                 lexaApples++;
-                document.getElementById('lexaImg').src = `/pages/testtask/assets/lexa_${lexaApples}.png`;
+                document.getElementById('lexaImg').src = `/pages/tasks/mathematics/task1/assets/lexa_${lexaApples}.png`;
                 updateLexaSpeech();
             }
         }
@@ -363,7 +364,7 @@
     document.addEventListener('mouseup', endDrag);
 
     document.getElementById('checkAnswer').addEventListener('click', async () => {
-        const userAnswer = parseInt(document.getElementById('answer').value);
+        const userAnswer = document.getElementById('answer').value;
 
         try {
             console.log('Отправка ответа:', userAnswer);
@@ -373,7 +374,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    answer: userAnswer
+                    answer: userAnswer.toString()
                 })
             });
 

@@ -1,0 +1,305 @@
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .game-title {
+        width: 100%;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        margin-top: 10px;
+    }
+
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        gap: 80px;
+        width: 100%;
+    }
+
+    .character {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    #nature-character img {
+        max-width: 270px;
+        height: auto;
+        display: block;
+    }
+
+    .character .speech-bubble {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 220px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .character .speech-bubble:after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid white;
+    }
+
+    .game-area {
+        display: flex;
+        justify-content: space-between;
+        height: 100%;
+        padding: 20px;
+    }
+
+    .habitats {
+        width: 60%;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .habitat {
+        position: relative;
+        border: 3px solid #4b0082;
+        border-radius: 15px;
+        overflow: hidden;
+        aspect-ratio: 1;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .habitat.droppable {
+        border-style: dashed;
+    }
+
+    .habitat.correct {
+        border-color: #28a745;
+    }
+
+    .habitat.incorrect {
+        border-color: #dc3545;
+    }
+
+    .animals {
+        width: 35%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .animal {
+        width: 100%;
+        aspect-ratio: 1;
+        border: 3px solid #4b0082;
+        border-radius: 15px;
+        overflow: hidden;
+        cursor: move;
+        background-size: cover;
+        background-position: center;
+        transition: transform 0.2s;
+    }
+
+    .animal:hover {
+        transform: scale(1.05);
+    }
+
+    .animal.dragging {
+        opacity: 0.5;
+    }
+
+    .answer-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        position: static;
+    }
+
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+        color: white;
+        font-size: 18px;
+    }
+</style>
+
+<div class="game-title">
+    В какой среде обитания должны быть животные?
+</div>
+<div class="game-container">
+    <div class="game-area">
+        <div class="habitats">
+            <div class="habitat" data-habitat="swamp"
+                style="background-image: url('/pages/tasks/nature/task2/assets/boloto.jpg')"></div>
+            <div class="habitat" data-habitat="bamboo"
+                style="background-image: url('/pages/tasks/nature/task2/assets/bambooforest.jpg')"></div>
+            <div class="habitat" data-habitat="ice"
+                style="background-image: url('/pages/tasks/nature/task2/assets/antarctic.jpg')"></div>
+            <div class="habitat" data-habitat="savanna"
+                style="background-image: url('/pages/tasks/nature/task2/assets/savanna.jpg')"></div>
+        </div>
+        <div class="animals">
+            <div class="animal" draggable="true" data-animal="frog"
+                style="background-image: url('/pages/tasks/nature/task2/assets/frog.jpg')"></div>
+            <div class="animal" draggable="true" data-animal="panda"
+                style="background-image: url('/pages/tasks/nature/task2/assets/panda.jpg')"></div>
+            <div class="animal" draggable="true" data-animal="penguin"
+                style="background-image: url('/pages/tasks/nature/task2/assets/pinguin.jpg')"></div>
+            <div class="animal" draggable="true" data-animal="elephant"
+                style="background-image: url('/pages/tasks/nature/task2/assets/elephant.jpg')"></div>
+        </div>
+    </div>
+</div>
+<div class="answer-container">
+    <button class="btn btn-primary" id="checkAnswer">Проверить</button>
+</div>
+
+<script>
+    const correctPairs = {
+        'frog': 'swamp',
+        'panda': 'bamboo',
+        'penguin': 'ice',
+        'elephant': 'savanna'
+    };
+
+    let currentPairs = {};
+
+    // Настройка drag and drop
+    document.querySelectorAll('.animal').forEach(animal => {
+        animal.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', animal.dataset.animal);
+            animal.classList.add('dragging');
+        });
+
+        animal.addEventListener('dragend', e => {
+            animal.classList.remove('dragging');
+        });
+    });
+
+    document.querySelectorAll('.habitat').forEach(habitat => {
+        habitat.addEventListener('dragover', e => {
+            e.preventDefault();
+            habitat.classList.add('droppable');
+        });
+
+        habitat.addEventListener('dragleave', e => {
+            habitat.classList.remove('droppable');
+        });
+
+        habitat.addEventListener('drop', e => {
+            e.preventDefault();
+            const animal = e.dataTransfer.getData('text/plain');
+            const habitatType = habitat.dataset.habitat;
+
+            // Удаляем предыдущее размещение этого животного
+            Object.keys(currentPairs).forEach(key => {
+                if (currentPairs[key] === habitatType) {
+                    delete currentPairs[key];
+                }
+            });
+
+            // Добавляем новое размещение
+            currentPairs[animal] = habitatType;
+
+            // Обновляем визуальное отображение
+            updateVisuals();
+        });
+    });
+
+    function updateVisuals() {
+        // Сбрасываем все стили
+        document.querySelectorAll('.habitat').forEach(habitat => {
+            habitat.classList.remove('correct', 'incorrect', 'droppable');
+        });
+
+        // Применяем новые стили
+        Object.entries(currentPairs).forEach(([animal, habitat]) => {
+            const habitatElement = document.querySelector(`[data-habitat="${habitat}"]`);
+            if (correctPairs[animal] === habitat) {
+                habitatElement.classList.add('correct');
+            } else {
+                habitatElement.classList.add('incorrect');
+            }
+        });
+    }
+
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
+        // Проверяем, что все животные размещены
+        const allPlaced = Object.keys(correctPairs).every(animal => currentPairs[animal]);
+
+        if (!allPlaced) {
+            alert('Пожалуйста, разместите всех животных!');
+            return;
+        }
+
+        try {
+            // Преобразуем объект ответов в строку
+            const answerString = Object.entries(currentPairs)
+                .map(([animal, habitat]) => `${animal}:${habitat}`)
+                .join(',');
+
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: answerString
+                })
+            });
+            const data = await response.json();
+            if (data.is_correct) {
+                alert('Правильно! Молодец!');
+                try {
+                    window.redirectToSubject();
+                } catch (e) {
+                    window.location.href = '/subjects/nature';
+                }
+            } else {
+                alert('Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
+        }
+    });
+</script>

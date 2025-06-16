@@ -1,0 +1,234 @@
+<style>
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        background-image: url('/pages/testtask/assets/background.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 0 20px;
+        gap: 200px;
+        width: 100%;
+    }
+
+    .character {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    .character img {
+        height: auto;
+        display: block;
+    }
+
+    #stepa img {
+        max-width: 350px;
+    }
+
+    .words-container {
+        position: absolute;
+        top: 50%;
+        left: 95%;
+        transform: translate(-100%, -50%);
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+        justify-content: flex-end;
+        width: 60%;
+        white-space: nowrap;
+        z-index: 10;
+    }
+
+    .word-block {
+        background-color: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        cursor: move;
+        user-select: none;
+        font-size: 18px;
+        transition: transform 0.2s;
+    }
+
+    .word-block:hover {
+        transform: scale(1.05);
+    }
+
+    .word-block.dragging {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .answer-container {
+        max-width: 1600px;
+        width: 100%;
+        margin: 20px auto 0;
+        padding: 20px;
+        background-color: #f1ebff;
+        border-radius: 15px;
+    }
+
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+    }
+
+    .speech-bubble {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 300px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .speech-bubble:after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid white;
+    }
+</style>
+
+<div class="game-container">
+    <div class="character-container">
+        <div class="character" id="stepa">
+            <div class="speech-bubble">
+                Помоги мне составить правильное предложение из этих слов!
+            </div>
+            <img src="/pages/tasks/russian_language/task1/assets/lexa_3.png" alt="Стёпа" id="stepaImg"
+                draggable="false">
+        </div>
+    </div>
+    <div class="words-container" id="wordsContainer">
+        <div class="word-block" draggable="true">Кот</div>
+        <div class="word-block" draggable="true">траве</div>
+        <div class="word-block" draggable="true">бегает по</div>
+        <div class="word-block" draggable="true">двора</div>
+        <div class="word-block" draggable="true">заднего</div>
+    </div>
+</div>
+
+<div class="answer-container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <button class="btn btn-primary" id="checkAnswer">Проверить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const words = ['Кот', 'траве', 'бегает по', 'двора', 'заднего'];
+    const correctAnswer = 'Кот бегает по траве заднего двора';
+    let draggedElement = null;
+
+    document.querySelectorAll('.word-block').forEach(block => {
+        block.addEventListener('dragstart', (e) => {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            const img = document.createElement('img');
+            img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>';
+            e.dataTransfer.setDragImage(img, 0, 0);
+        });
+
+        block.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+        });
+    });
+
+    const wordsContainer = document.getElementById('wordsContainer');
+
+    wordsContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(wordsContainer, e.clientX);
+        const draggable = document.querySelector('.dragging');
+        if (draggable) {
+            if (afterElement == null) {
+                wordsContainer.appendChild(draggable);
+            } else {
+                wordsContainer.insertBefore(draggable, afterElement);
+            }
+        }
+    });
+
+    function getDragAfterElement(container, x) {
+        const draggableElements = [...container.querySelectorAll('.word-block:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = x - box.left - box.width / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
+        const currentOrder = Array.from(document.querySelectorAll('.word-block'))
+            .map(block => block.textContent)
+            .join(' ');
+
+        try {
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: currentOrder
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.is_correct) {
+                alert('Правильно! Молодец!');
+                try {
+                    window.redirectToSubject();
+                } catch (e) {
+                    window.location.href = '/subjects/russian_language';
+                }
+            } else {
+                alert('Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
+        }
+    });
+</script>

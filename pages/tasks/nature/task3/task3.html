@@ -1,0 +1,181 @@
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .game-title {
+        width: 100%;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        margin-top: 10px;
+    }
+
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .slider-controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        gap: 20px;
+        z-index: 3;
+        align-items: center;
+    }
+
+    .slider-btn {
+        background: rgba(255, 255, 255, 0.8);
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: background 0.3s;
+    }
+
+    .slider-btn:hover {
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .tree-input {
+        padding: 8px 15px;
+        border: 2px solid #4b0082;
+        border-radius: 10px;
+        font-size: 16px;
+        background-color: rgba(255, 255, 255, 0.9);
+        min-width: 200px;
+    }
+
+    .answer-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        position: static;
+    }
+
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+        color: white;
+        font-size: 18px;
+    }
+
+    .background-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.5s ease;
+        z-index: 1;
+    }
+</style>
+
+<div class="game-title">
+    Назовите дерево, изображенное на картинке
+</div>
+<div class="game-container">
+    <img src="/pages/tasks/nature/task3/assets/birch.jpg" alt="Дерево" class="background-image" id="backgroundImage">
+    <div class="slider-controls">
+        <button class="slider-btn" id="prevBtn">←</button>
+        <input type="text" class="tree-input" id="treeInput" placeholder="Введите название дерева">
+        <button class="slider-btn" id="nextBtn">→</button>
+    </div>
+</div>
+<div class="answer-container">
+    <button class="btn btn-primary" id="checkAnswer">Проверить</button>
+</div>
+
+<script>
+    const images = [
+        '/pages/tasks/nature/task3/assets/birch.jpg',
+        '/pages/tasks/nature/task3/assets/oak.jpg',
+        '/pages/tasks/nature/task3/assets/maple.jpg',
+        '/pages/tasks/nature/task3/assets/rowan.jpg'
+    ];
+
+    let currentImageIndex = 0;
+    let answers = {};
+
+    function updateImage() {
+        document.getElementById('backgroundImage').src = images[currentImageIndex];
+        // Сбрасываем введенное значение при смене картинки
+        document.getElementById('treeInput').value = answers[currentImageIndex] || '';
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        updateImage();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        updateImage();
+    });
+
+    document.getElementById('treeInput').addEventListener('input', function () {
+        answers[currentImageIndex] = this.value.trim();
+    });
+
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
+        // Проверяем, что все картинки имеют ответы
+        const allAnswered = images.every((_, index) => answers[index]);
+
+        if (!allAnswered) {
+            alert('Пожалуйста, введите название дерева для всех картинок!');
+            return;
+        }
+
+        try {
+            // Преобразуем объект ответов в строку
+            const answerString = Object.values(answers).join(',');
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: answerString
+                })
+            });
+            const data = await response.json();
+            if (data.is_correct) {
+                alert('Правильно! Молодец!');
+                try {
+                    window.redirectToSubject();
+                } catch (e) {
+                    window.location.href = '/subjects/nature';
+                }
+            } else {
+                alert('Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
+        }
+    });
+
+    // Инициализация
+    updateImage();
+</script>

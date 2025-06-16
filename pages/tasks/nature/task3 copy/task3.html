@@ -1,0 +1,194 @@
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .game-title {
+        width: 100%;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        margin-top: 10px;
+    }
+
+    .game-container {
+        max-width: 1100px;
+        width: 100%;
+        height: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        gap: 80px;
+        width: 100%;
+    }
+
+    .character {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    #nature-character img {
+        max-width: 270px;
+        height: auto;
+        display: block;
+    }
+
+    .character .speech-bubble {
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 220px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .character .speech-bubble:after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid white;
+    }
+
+    .trees-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding: 20px;
+        height: 100%;
+    }
+
+    .tree-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .tree-image {
+        width: 200px;
+        height: 200px;
+        border: 3px solid #4b0082;
+        border-radius: 15px;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .tree-input {
+        width: 200px;
+        padding: 8px 15px;
+        border: 2px solid #4b0082;
+        border-radius: 10px;
+        font-size: 16px;
+        text-align: center;
+    }
+
+    .answer-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        position: static;
+    }
+
+    .btn-primary {
+        background-color: #4b0082 !important;
+        border: none !important;
+        border-radius: 15px !important;
+        padding: 10px 30px !important;
+        color: white;
+        font-size: 18px;
+    }
+</style>
+
+<div class="game-title">
+    Как называются эти деревья?
+</div>
+<div class="game-container">
+    <div class="trees-container">
+        <div class="tree-card">
+            <div class="tree-image" style="background-image: url('/pages/tasks/nature/task3/assets/birch.jpg')"></div>
+            <input type="text" class="tree-input" placeholder="Введите название">
+        </div>
+        <div class="tree-card">
+            <div class="tree-image" style="background-image: url('/pages/tasks/nature/task3/assets/oak.jpg')"></div>
+            <input type="text" class="tree-input" placeholder="Введите название">
+        </div>
+        <div class="tree-card">
+            <div class="tree-image" style="background-image: url('/pages/tasks/nature/task3/assets/maple.jpg')"></div>
+            <input type="text" class="tree-input" placeholder="Введите название">
+        </div>
+        <div class="tree-card">
+            <div class="tree-image" style="background-image: url('/pages/tasks/nature/task3/assets/rowan.jpg')"></div>
+            <input type="text" class="tree-input" placeholder="Введите название">
+        </div>
+    </div>
+</div>
+<div class="answer-container">
+    <button class="btn btn-primary" id="checkAnswer">Проверить</button>
+</div>
+
+<script>
+    document.getElementById('checkAnswer').addEventListener('click', async () => {
+        // Собираем все ответы
+        const answers = Array.from(document.querySelectorAll('.tree-input'))
+            .map(input => input.value.trim().toLowerCase())
+            .join(',');
+
+        try {
+            const response = await fetch(`/check_answer/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: answers
+                })
+            });
+            const data = await response.json();
+            if (data.is_correct) {
+                alert('Правильно! Молодец!');
+                try {
+                    window.redirectToSubject();
+                } catch (e) {
+                    window.location.href = '/subjects/nature';
+                }
+            } else {
+                alert('Попробуй еще раз!');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при проверке ответа');
+        }
+    });
+</script>

@@ -12,7 +12,7 @@ from handlers.childrens import get_subject_name
 router = APIRouter()
 templates = Jinja2Templates(directory="pages")
 
-
+LOCAL_TIMEZONE = timezone(timedelta(hours=4))  # UTC+4
 
 @router.get("/parents-database", response_class=HTMLResponse, )
 async def parents_database(request: Request,  current_user: Dict[str, Any] = Depends(school_worker_required)):
@@ -171,6 +171,7 @@ async def get_parents(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ошибка при получении списка родителей"
         )
+    
 
 @router.get("/get_children")
 async def get_children(
@@ -326,9 +327,9 @@ async def get_child_statistics(
 
 def make_aware(dt):
     if dt is None:
-        return datetime.min.replace(tzinfo=timezone.utc)
+        return datetime.min.replace(tzinfo=LOCAL_TIMEZONE)
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=LOCAL_TIMEZONE)
     return dt
 
 @router.get("/get_school_statistics")
@@ -448,6 +449,7 @@ async def get_school_statistics(
                     continue
                     
                 stat = {
+                    "id": result.id,
                     "child_id": child.id,
                     "full_name": child.full_name,
                     "current_class": child.current_class,

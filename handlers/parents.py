@@ -1,21 +1,23 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from models.user import User, get_current_user, parent_required, is_parent_of_child, get_children_for_parent
+from models.user import User, get_current_user, parent_required, is_parent_of_child, get_children_for_parent, parent_or_school_worker_required
 from models.school import School
 from models.result import Result
 from utils.logger import log_request, log_response, log_error
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from handlers.childrens import get_subject_name
 
 router = APIRouter()
 templates = Jinja2Templates(directory="pages")
 
+LOCAL_TIMEZONE = timezone(timedelta(hours=4))  # UTC+4
+
 def make_aware(dt):
     if dt is None:
-        return datetime.min.replace(tzinfo=timezone.utc)
+        return datetime.min.replace(tzinfo=LOCAL_TIMEZONE)
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=LOCAL_TIMEZONE)
     return dt
 
 @router.get("/children-profiles", response_class=HTMLResponse)
@@ -23,13 +25,32 @@ async def children_profiles(
     request: Request,
     current_user: User = Depends(parent_required)
 ):
-    return templates.TemplateResponse(
-        "parent_pages/children_profiles.html",
-        {
-            "request": request,
-            "current_user": current_user
-        }
-    )
+    log_request(request, current_user)
+    try:
+        # Получаем список детей
+        children = await get_children_for_parent(current_user.id)
+        
+        # Получаем список всех школ
+        schools = await School.all()
+        schools_list = [{"id": school.id, "name": school.name} for school in schools]
+        
+        log_response({
+            "message": "Открыта страница профилей детей",
+            "children_count": len(children)
+        })
+        
+        return templates.TemplateResponse(
+            "parent_pages/children_profiles.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "children": children,
+                "schools": schools_list
+            }
+        )
+    except Exception as e:
+        log_error(e, "Ошибка при открытии страницы профилей детей")
+        raise
 
 @router.get("/add-child", response_class=HTMLResponse)
 async def add_child(
@@ -316,7 +337,7 @@ async def get_child_statistics(
 async def result_details(
     request: Request,
     result_id: int,
-    current_user: User = Depends(parent_required)
+    current_user: User = Depends(parent_or_school_worker_required)
 ):
     log_request(request, current_user)
     try:
@@ -325,10 +346,26 @@ async def result_details(
         if not result:
             raise HTTPException(status_code=404, detail="Результат не найден")
 
-        # Проверяем, что результат принадлежит ребенку родителя
-        if not await is_parent_of_child(current_user.id, result.user_id):
-            raise HTTPException(status_code=403, detail="Доступ запрещен")
-
+        # Проверяем права доступа в зависимости от роли
+        if current_user.role == "parent":
+            # Для родителя проверяем, что результат принадлежит его ребенку
+            if not await is_parent_of_child(current_user.id, result.user_id):
+                raise HTTPException(status_code=403, detail="Доступ запрещен")
+        else:  # psychologist
+            # Для работника школы проверяем, что ребенок из той же школы
+            child = await User.get(id=result.user_id)
+            if not child:
+                raise HTTPException(status_code=404, detail="Ребенок не найден")
+            
+            # Загружаем школу ребенка
+            await child.fetch_related('school')
+            # Загружаем школу работника
+            await current_user.fetch_related('school')
+            
+            if not child.school or not current_user.school or child.school.id != current_user.school.id:
+                log_error(Exception("Попытка доступа к результату ребенка из другой школы"), f"Child ID: {result.user_id}")
+                raise HTTPException(status_code=403, detail="Доступ запрещен")
+        
         # Получаем информацию о ребенке
         child = await User.get(id=result.user_id)
         
@@ -351,3 +388,29 @@ async def result_details(
     except Exception as e:
         log_error(e, "Ошибка при открытии страницы деталей результата")
         raise
+
+@router.get("/children-profiles")
+async def children_profiles(request: Request, current_user: User = Depends(get_current_user)):
+    try:
+        # Получаем список детей для текущего пользователя
+        children = await get_children_for_parent(current_user.id)
+        
+        # Получаем список всех школ
+        schools = await School.all()
+        schools_list = [{"id": school.id, "name": school.name} for school in schools]
+        
+        # Логируем ответ
+        print(f"DEBUG: Получены данные о {len(children)} детях")
+        
+        return templates.TemplateResponse(
+            "parent_pages/children_profiles.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "children": children,
+                "schools": schools_list
+            }
+        )
+    except Exception as e:
+        print(f"Ошибка при получении данных: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
