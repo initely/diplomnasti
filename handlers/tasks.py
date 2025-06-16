@@ -9,7 +9,7 @@ from pydantic import BaseModel
 import asyncio
 import os
 from handlers.childrens import get_available_subjects
-from models.user import User, child_required, parent_required, is_parent_of_child
+from models.user import User, child_required, parent_required, is_parent_of_child, parent_or_school_worker_required
 from models.task import Task
 from models.result import Result
 from models.answer import Answer
@@ -575,7 +575,7 @@ async def check_task_status(request: Request, task_id: int, current_user: User =
 async def confirm_result(
     request: Request,
     result_id: int,
-    current_user: User = Depends(parent_required)
+    current_user: User = Depends(parent_or_school_worker_required)
 ):
     log_request(request, current_user)
     try:
