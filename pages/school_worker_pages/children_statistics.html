@@ -442,9 +442,10 @@
                 row.innerHTML = `
                     <td>
                         <a href="/statistics/${stat.id}" class="stat-link" title="Подробная информация">
-                            <i class="bi bi-arrow-right-circle-fill"></i>
                             <span class="stat-number">${(currentPage - 1) * rowsPerPage + index + 1}</span>
-                        </a>
+                            <i class="bi bi-arrow-right-circle-fill"></i>
+
+                            </a>
                     </td>
                     <td><a href="/child/${stat.child_id}" style="text-decoration: none;">${stat.full_name}</a></td>
                     <td>${stat.current_class}</td>
